@@ -7,13 +7,12 @@ import android.view.View;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.util.Log;
 import android.graphics.RectF;
 import android.view.MotionEvent;
 import android.view.WindowManager;
 
 import com.android.spaceship.Global;
-import com.android.util.ImageInfo;
+import com.android.util.UImageInfo;
 import com.android.spaceship.R;
 import com.android.util.UBitmapUtil;
 
@@ -54,32 +53,52 @@ public class USpaceShipView extends View {
         // Init a ship
         float[] center = {45.f, 45.f};
         float[] size = {90.f, 90.f};
-        mShipInfo = new ImageInfo(center, size, 35.f, 5.f, false); // few dummy values for now
+        mShipInfo = new UImageInfo(center, size, 35.f, 5.f, false); // few dummy values for now
 
         RectF shipPos = new RectF(400, 400, 490, 490);
         float[] shipVel = {0.f, 5.f};
-        mShip = new Ship(mContext, R.drawable.double_ship, shipPos, shipVel, 0, mShipInfo);
+        mUShip = new UShip(mContext, R.drawable.double_ship, shipPos, shipVel, 0, mShipInfo);
 
         mPrevPosition = new float[2];
         mPrevPosition[0] = shipPos.left;
         mPrevPosition[1] = shipPos.top;
 
         mBgrdBitmap = UBitmapUtil.loadBitmap(mContext, R.drawable.nebula, false);
+
+        float[] debrisCenter = {320.f, 240.f};
+        float[] debrisSize = {640.f, 480.f};
+        mDebrisInfo = new UImageInfo(debrisCenter, debrisSize);
+        mDebrisBitmap = UBitmapUtil.loadBitmap(mContext, R.drawable.debris, false);
     }
 
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        // draw the background image first
-        canvas.drawBitmap(mBgrdBitmap, null,
-                new RectF(0,0,Global.SCREEN_WIDTH,Global.SCREEN_HEIGHT), mPaint);
+        // animate the background
+        canvas.drawBitmap(mBgrdBitmap, null, new RectF(0,0,Global.SCREEN_WIDTH,Global.SCREEN_HEIGHT), mPaint);
+        animateDebris(canvas);
 
         // draw the ship
-        mShip.draw(canvas, mPaint);
+        mUShip.draw(canvas, mPaint);
 
         // update position
-        mShip.update();
+        mUShip.update();
         invalidate();
+    }
+
+    private void animateDebris(Canvas canvas) {
+        // positioned in center
+        float left = (Global.SCREEN_WIDTH / 2) - (mDebrisInfo.getSize()[0] / 2);
+        float top = (Global.SCREEN_HEIGHT / 2) - (mDebrisInfo.getSize()[1] / 2);
+
+        mAnimTime += 1;
+        float wtime = (mAnimTime / 4) % Global.SCREEN_WIDTH;
+        canvas.drawBitmap(mDebrisBitmap, null,
+                new RectF((wtime - left), top, (wtime - left + mDebrisInfo.getSize()[0]), (top + mDebrisInfo.getSize()[1])),
+                mPaint);
+        canvas.drawBitmap(mDebrisBitmap, null,
+                new RectF((wtime + left), top, (wtime + left + mDebrisInfo.getSize()[0]), (top + mDebrisInfo.getSize()[1])),
+                mPaint);
     }
 
     @Override
@@ -92,11 +111,11 @@ public class USpaceShipView extends View {
 
         if (actionCode == MotionEvent.ACTION_DOWN ||
             actionCode == MotionEvent.ACTION_MOVE) {
-            mShip.notifyPosition(x, y);
-            mShip.setThrust(true);
+            mUShip.notifyPosition(x, y);
+            mUShip.setThrust(true);
         }
         else if (actionCode == MotionEvent.ACTION_UP) {
-            //mShip.setThrust(false);
+            //mUShip.setThrust(false);
         }
 
         mPrevPosition[0] = x;
@@ -105,10 +124,14 @@ public class USpaceShipView extends View {
     }
 
     private Paint mPaint;
-    private ImageInfo mShipInfo;
-    private Ship mShip;
+    private UImageInfo mShipInfo;
+    private UShip mUShip;
     private float[] mPrevPosition;
+
     private Bitmap mBgrdBitmap;
+    private UImageInfo mDebrisInfo;
+    private Bitmap mDebrisBitmap;
+    private float mAnimTime = 0.5f;
 
     private Context mContext;
     private static final String TAG = "com.android.ui.USpaceShipView";

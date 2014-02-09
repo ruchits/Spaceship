@@ -1,10 +1,9 @@
 package com.android.ui;
 
 import com.android.spaceship.Global;
-import com.android.util.ImageInfo;
+import com.android.util.UImageInfo;
 
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.content.Context;
 import android.graphics.Rect;
@@ -21,9 +20,9 @@ import com.android.util.UBitmapUtil;
  * entity. Each ship is responsible to maintain and update its
  * attributes. It will also draw itself on the canvas.
  */
-public class Ship {
+public class UShip {
 
-    public Ship(Context context, int resID, RectF pos, float[] vel, float angle,  ImageInfo info) {
+    public UShip(Context context, int resID, RectF pos, float[] vel, float angle, UImageInfo info) {
         mContext = context;
 
         mPos = pos;
@@ -42,15 +41,6 @@ public class Ship {
         mSourceShip = new Rect(0, 0, 90, 90);
         mSourceShipWithThrust = new Rect(90, 0, 180, 90);
 
-        // Cache the ship bitmap
-        // TODO: May have to change this later.
-        // this may prove to be a bad idea, memory-wise in case we have
-        // some high res bitmaps being cached across different classes
-        /*
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inPreferredConfig = Bitmap.Config.RGB_565;
-        mBitmap = BitmapFactory.decodeResource(mContext.getResources(), mResID, options);
-        */
         mBitmap = UBitmapUtil.loadBitmap(mContext, mResID, false);
     }
 
@@ -123,5 +113,5 @@ public class Ship {
     private Rect mSourceShip;
     private Rect mSourceShipWithThrust;
 
-    private static final String TAG = "com.android.ui.Ship";
+    private static final String TAG = "com.android.ui.UShip";
 }

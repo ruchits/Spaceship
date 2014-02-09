@@ -8,20 +8,25 @@ package com.android.util;
  * Data structure containing important information
  * about an image.
  */
-public class ImageInfo {
+public class UImageInfo {
     private float[] mCenter;
     private float[] mSize;
     private float mRadius = 0.f;
     private float mLifespan = Float.POSITIVE_INFINITY;
     boolean mAnimated = false;
 
-    public ImageInfo(float[] center, float[] size, float radius,
-                     float lifespan, boolean animated) {
+    public UImageInfo(float[] center, float[] size, float radius,
+                      float lifespan, boolean animated) {
         mCenter = center;
         mSize = size;
         mRadius = radius;
         mLifespan = lifespan;
         mAnimated = animated;
+    }
+
+    public UImageInfo(float[] center, float[] size) {
+        mCenter = center;
+        mSize = size;
     }
 
     public float[] getCenter() {
