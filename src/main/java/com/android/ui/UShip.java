@@ -55,7 +55,12 @@ public class UShip {
 
     // draw itself
     public void draw(Canvas canvas, Paint paint) {
-        canvas.drawBitmap(mBitmap, mSourceShip, mPos, paint);
+        if (mThrust) {
+            canvas.drawBitmap(mBitmap, mSourceShipWithThrust, mPos, paint);
+        }
+        else {
+            canvas.drawBitmap(mBitmap, mSourceShip, mPos, paint);
+        }
     }
 
     public void setThrust(boolean enable) {
@@ -128,7 +133,7 @@ public class UShip {
     private Rect mSourceShip;
     private Rect mSourceShipWithThrust;
 
-    private static final float FRICTION = 0.2f;
+    private static final float FRICTION = 0.05f;
     private static final float VELOCITY[] = {0.f, 5.f};
 
     private static final String TAG = "com.android.ui.UShip";

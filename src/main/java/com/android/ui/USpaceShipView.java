@@ -11,6 +11,15 @@ import android.graphics.RectF;
 import android.view.MotionEvent;
 import android.view.WindowManager;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Iterator;
+import java.util.Collections;
+import java.util.Timer;
+import java.util.TimerTask;
+import android.util.Log;
+import java.util.Random;
+
 import com.android.spaceship.Global;
 import com.android.util.UImageInfo;
 import com.android.spaceship.R;
@@ -64,13 +73,6 @@ public class USpaceShipView extends View {
         mPrevPosition[0] = shipPos.left;
         mPrevPosition[1] = shipPos.top;
 
-        // Init rocks
-        mRockInfo = new UImageInfo(center, size, 40.f, 5.f, false);
-
-        RectF rockPos = new RectF(900, 90, 990, 180);
-        float[] rockVel = {-5.f, 1.f};
-        mRock = new USprite(mContext, R.drawable.asteroid, rockPos, rockVel, 0, 0, mRockInfo);
-
         // Init background anim resources
         mBgrdBitmap = UBitmapUtil.loadBitmap(mContext, R.drawable.nebula, false);
 
@@ -78,6 +80,44 @@ public class USpaceShipView extends View {
         float[] debrisSize = {640.f, 480.f};
         mDebrisInfo = new UImageInfo(debrisCenter, debrisSize);
         mDebrisBitmap = UBitmapUtil.loadBitmap(mContext, R.drawable.debris, false);
+
+        // spawn all rocks
+        // TODO: rocks need to spawned at a certain time interval. Move this later.
+        mRockList = Collections.synchronizedList(new ArrayList<USprite>());
+
+        // create a timer that will spawn rocks at regular intervals
+        mTimer = new Timer();
+        mTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                spawnRock();
+            }
+        }, 0, 2000);
+
+        //spawnRocks();
+    }
+
+    private void spawnRock() {
+        if(mRockList.size() >= 5)
+            return;
+
+        Log.e(TAG, "Spawning a Rock");
+        // Init rocks
+        float[] center = {45.f, 45.f};
+        float[] size = {90.f, 90.f};
+        UImageInfo rockInfo = new UImageInfo(center, size, 40.f, 5.f, false);
+
+        Random r = new Random();
+        int top = r.nextInt(Global.SCREEN_HEIGHT);
+
+        //RectF rockPos = new RectF(Global.SCREEN_WIDTH, top, Global.SCREEN_WIDTH+size[0], top+size[1]);
+        RectF rockPos = new RectF(900, top, 900+size[0], top+size[1]);
+        float[] rockVel = {-5.f, 1.f};
+        USprite rock = new USprite(mContext, R.drawable.asteroid, rockPos, rockVel, 0, 0, rockInfo);
+
+        synchronized (mRockList) {
+            mRockList.add(rock);
+        }
     }
 
     protected void onDraw(Canvas canvas) {
@@ -90,12 +130,18 @@ public class USpaceShipView extends View {
         // draw the ship
         mUShip.draw(canvas, mPaint);
 
-        // draw the rock
-        mRock.draw(canvas, mPaint);
+        // draw all rocks in the list
+        synchronized(mRockList) {
+            Iterator it = mRockList.iterator();
+            while(it.hasNext()) {
+                USprite rock = (USprite) it.next();
+                rock.draw(canvas, mPaint);
+                rock.update();
+            }
+        }
 
         // update position
         mUShip.update();
-        mRock.update();
 
         invalidate();
     }
@@ -149,9 +195,10 @@ public class USpaceShipView extends View {
     private Paint mPaint;
     private UImageInfo mShipInfo;
     private UShip mUShip;
-    private UImageInfo mRockInfo;
-    private USprite mRock;
+    private List<USprite> mRockList;
     private float[] mPrevPosition;
+
+    private Timer mTimer;
 
     private Bitmap mBgrdBitmap;
     private UImageInfo mDebrisInfo;
