@@ -10,6 +10,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Paint;
 import com.android.util.UBitmapUtil;
+import android.util.Log;
 
 /**
  * Created by ruchitsharma on 2/8/2014.
@@ -54,22 +55,31 @@ public class UShip {
 
     // draw itself
     public void draw(Canvas canvas, Paint paint) {
-        //canvas.draw_image(self.image, self.image_center, self.image_size, self.pos, self.image_size, self.angle)
         canvas.drawBitmap(mBitmap, mSourceShip, mPos, paint);
     }
 
     public void setThrust(boolean enable) {
+        if(enable) {
+            mVel[0] = VELOCITY[0];
+            mVel[1] = VELOCITY[1];
+        }
+
         mThrust = enable;
+        Log.e(TAG, "enable Thrust - vel= " + mVel[1]);
     }
 
     // determines how to change the direction based on the new touch location
-    public void notifyPosition(float x, float y) {
-        boolean directionUp = (y > mPos.top) ? false : true;
+    public void notifyPosition(float x, float y, Boolean directionUp) {
+        //boolean directionUp = (y > mPos.top) ? false : true;
 
-        if (directionUp)
+        if (directionUp == null) // no change
+            mVel[1] = 0.f;
+        else if (directionUp)
             mVel[1] = (mVel[1] < 0.f) ? mVel[1] : -mVel[1];
         else
             mVel[1] = (mVel[1] > 0.f) ? mVel[1] : -mVel[1];
+
+        Log.e(TAG, "directionUp? " + directionUp + ", vel= " + mVel[1]);
     }
 
     // This method will increment ship's position based on its velocity, until
@@ -77,18 +87,23 @@ public class UShip {
     public void update() {
         RectF newPosition = new RectF(mPos);
 
-        // update the position
-        if (mThrust) {
-            newPosition.top += mVel[1];
-            newPosition.left +=  mVel[0];
-            newPosition.right = newPosition.left + mImageSize[0];
-            newPosition.bottom = newPosition.top + mImageSize[1];
+        // add friction if no thrust
+        if (!mThrust) {
+            mVel[0] *= (1 - FRICTION);
+            mVel[1] *= (1 - FRICTION);
+        }
 
-            // out of bounds?
-            if (newPosition.right > Global.SCREEN_WIDTH || newPosition.left < 0 ||
-                newPosition.bottom > Global.SCREEN_HEIGHT || newPosition.top < 0) {
-                newPosition = mPos;
-            }
+        //Log.e(TAG, "vel= " + mVel[1]);
+
+        newPosition.top += mVel[1];
+        newPosition.left +=  mVel[0];
+        newPosition.right = newPosition.left + mImageSize[0];
+        newPosition.bottom = newPosition.top + mImageSize[1];
+
+        // out of bounds?
+        if (newPosition.right > Global.SCREEN_WIDTH || newPosition.left < 0 ||
+            newPosition.bottom > Global.SCREEN_HEIGHT || newPosition.top < 0) {
+            newPosition = mPos;
         }
 
         mPos = newPosition;
@@ -112,6 +127,9 @@ public class UShip {
 
     private Rect mSourceShip;
     private Rect mSourceShipWithThrust;
+
+    private static final float FRICTION = 0.2f;
+    private static final float VELOCITY[] = {0.f, 5.f};
 
     private static final String TAG = "com.android.ui.UShip";
 }

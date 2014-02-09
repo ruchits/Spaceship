@@ -56,7 +56,7 @@ public class USpaceShipView extends View {
         mShipInfo = new UImageInfo(center, size, 35.f, 5.f, false); // few dummy values for now
 
         RectF shipPos = new RectF(400, 400, 490, 490);
-        float[] shipVel = {0.f, 5.f};
+        float[] shipVel = {0.f, 0.f};
         mUShip = new UShip(mContext, R.drawable.double_ship, shipPos, shipVel, 0, mShipInfo);
 
         mPrevPosition = new float[2];
@@ -111,11 +111,15 @@ public class USpaceShipView extends View {
 
         if (actionCode == MotionEvent.ACTION_DOWN ||
             actionCode == MotionEvent.ACTION_MOVE) {
-            mUShip.notifyPosition(x, y);
+            Boolean motionDirectionUp = null;
+            if (y > mPrevPosition[1]) motionDirectionUp = false;
+            else if (y < mPrevPosition[1]) motionDirectionUp = true;
+
             mUShip.setThrust(true);
+            mUShip.notifyPosition(x, y, motionDirectionUp);
         }
         else if (actionCode == MotionEvent.ACTION_UP) {
-            //mUShip.setThrust(false);
+            mUShip.setThrust(false);
         }
 
         mPrevPosition[0] = x;
