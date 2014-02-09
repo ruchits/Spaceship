@@ -1,6 +1,8 @@
 package com.android.ui;
 
+import android.graphics.Bitmap;
 import android.graphics.Point;
+import android.view.Display;
 import android.view.View;
 import android.content.Context;
 import android.graphics.Canvas;
@@ -8,9 +10,12 @@ import android.graphics.Paint;
 import android.util.Log;
 import android.graphics.RectF;
 import android.view.MotionEvent;
+import android.view.WindowManager;
 
+import com.android.spaceship.Global;
 import com.android.util.ImageInfo;
 import com.android.spaceship.R;
+import com.android.util.UBitmapUtil;
 
 /**
  * Created by ruchitsharma on 2/7/2014.
@@ -25,7 +30,16 @@ public class USpaceShipView extends View {
     public USpaceShipView(Context context) {
         super(context);
         mContext = context;
+
         init();
+
+        // Get the screen width/height.
+        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        Display display = wm.getDefaultDisplay();
+        Point size = new Point();
+        display.getSize(size);
+        Global.SCREEN_WIDTH= size.x;
+        Global.SCREEN_HEIGHT = size.y;
     }
 
     /*
@@ -49,10 +63,16 @@ public class USpaceShipView extends View {
         mPrevPosition = new float[2];
         mPrevPosition[0] = shipPos.left;
         mPrevPosition[1] = shipPos.top;
+
+        mBgrdBitmap = UBitmapUtil.loadBitmap(mContext, R.drawable.nebula, false);
     }
 
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+
+        // draw the background image first
+        canvas.drawBitmap(mBgrdBitmap, null,
+                new RectF(0,0,Global.SCREEN_WIDTH,Global.SCREEN_HEIGHT), mPaint);
 
         // draw the ship
         mShip.draw(canvas, mPaint);
@@ -88,6 +108,7 @@ public class USpaceShipView extends View {
     private ImageInfo mShipInfo;
     private Ship mShip;
     private float[] mPrevPosition;
+    private Bitmap mBgrdBitmap;
 
     private Context mContext;
     private static final String TAG = "com.android.ui.USpaceShipView";

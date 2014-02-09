@@ -1,5 +1,6 @@
 package com.android.ui;
 
+import com.android.spaceship.Global;
 import com.android.util.ImageInfo;
 
 import android.graphics.Bitmap;
@@ -9,10 +10,7 @@ import android.content.Context;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Paint;
-import android.graphics.Point;
-import android.view.WindowManager;
-import android.view.Display;
-import android.util.Log;
+import com.android.util.UBitmapUtil;
 
 /**
  * Created by ruchitsharma on 2/8/2014.
@@ -48,19 +46,12 @@ public class Ship {
         // TODO: May have to change this later.
         // this may prove to be a bad idea, memory-wise in case we have
         // some high res bitmaps being cached across different classes
+        /*
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inPreferredConfig = Bitmap.Config.RGB_565;
         mBitmap = BitmapFactory.decodeResource(mContext.getResources(), mResID, options);
-
-
-        // Get the screen width/height.
-        // TODO: Need to find the right place to store this.
-        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-        Display display = wm.getDefaultDisplay();
-        Point size = new Point();
-        display.getSize(size);
-        SCREEN_WIDTH = size.x;
-        SCREEN_HEIGHT = size.y;
+        */
+        mBitmap = UBitmapUtil.loadBitmap(mContext, mResID, false);
     }
 
     public RectF getPosition() {
@@ -104,8 +95,8 @@ public class Ship {
             newPosition.bottom = newPosition.top + mImageSize[1];
 
             // out of bounds?
-            if (newPosition.right > SCREEN_WIDTH || newPosition.left < 0 ||
-                newPosition.bottom > SCREEN_HEIGHT || newPosition.top < 0) {
+            if (newPosition.right > Global.SCREEN_WIDTH || newPosition.left < 0 ||
+                newPosition.bottom > Global.SCREEN_HEIGHT || newPosition.top < 0) {
                 newPosition = mPos;
             }
         }
@@ -131,9 +122,6 @@ public class Ship {
 
     private Rect mSourceShip;
     private Rect mSourceShipWithThrust;
-
-    public int SCREEN_WIDTH;
-    public int SCREEN_HEIGHT;
 
     private static final String TAG = "com.android.ui.Ship";
 }
