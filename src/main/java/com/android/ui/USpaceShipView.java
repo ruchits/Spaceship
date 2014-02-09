@@ -1,13 +1,13 @@
 package com.android.ui;
 
+import android.graphics.Point;
 import android.view.View;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.util.Log;
 import android.graphics.RectF;
+import android.view.MotionEvent;
 
 import com.android.util.ImageInfo;
 import com.android.spaceship.R;
@@ -32,7 +32,6 @@ public class USpaceShipView extends View {
      * Responsible for initializing all UI elements
      */
     private void init() {
-        Log.e(TAG, "init ++");
         mPaint = new Paint();
         mPaint.setAntiAlias(true);
         mPaint.setFilterBitmap(true);
@@ -44,27 +43,53 @@ public class USpaceShipView extends View {
         mShipInfo = new ImageInfo(center, size, 35.f, 5.f, false); // few dummy values for now
 
         RectF shipPos = new RectF(400, 400, 490, 490);
-        float[] shipVel = {0.f, 2.f};
+        float[] shipVel = {0.f, 3.f};
         mShip = new Ship(mContext, R.drawable.double_ship, shipPos, shipVel, 0, mShipInfo);
+
+        mPrevPosition = new float[2];
+        mPrevPosition[0] = shipPos.left;
+        mPrevPosition[1] = shipPos.top;
     }
 
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        Log.e(TAG, "onDraw++");
 
         // draw the ship
         mShip.draw(canvas, mPaint);
 
         // update position
         mShip.update();
-
-        //invalidate the view
         invalidate();
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        float x = event.getX();
+        float y = event.getY();
+
+        int action = event.getAction();
+        int actionCode = action & MotionEvent.ACTION_MASK;
+
+        if (actionCode == MotionEvent.ACTION_DOWN ||
+            actionCode == MotionEvent.ACTION_MOVE) {
+            float[] pos = {x, y};
+            boolean directionUp = (y > mPrevPosition[1]) ? false : true;
+            mShip.setDirectionUp(directionUp);
+            mShip.setThrust(true);
+        }
+        else if (actionCode == MotionEvent.ACTION_UP) {
+            // do nothing.
+        }
+
+        mPrevPosition[0] = x;
+        mPrevPosition[1] = y;
+        return true;
     }
 
     private Paint mPaint;
     private ImageInfo mShipInfo;
     private Ship mShip;
+    private float[] mPrevPosition;
 
     private Context mContext;
     private static final String TAG = "com.android.ui.USpaceShipView";

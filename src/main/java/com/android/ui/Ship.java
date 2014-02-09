@@ -74,25 +74,38 @@ public class Ship {
     // draw itself
     public void draw(Canvas canvas, Paint paint) {
         //canvas.draw_image(self.image, self.image_center, self.image_size, self.pos, self.image_size, self.angle)
-        Log.e(TAG, "Drawing on= " + mPos.left + ", " + mPos.top);
         canvas.drawBitmap(mBitmap, mSourceShip, mPos, paint);
     }
 
+    public void setThrust(boolean enable) {
+        mThrust = enable;
+    }
+
+    // determine the direction of velocity in y-direction
+    public void setDirectionUp(boolean directionUp) {
+        if (directionUp)
+            mVel[1] = (mVel[1] < 0.f) ? mVel[1] : -mVel[1];
+        else
+            mVel[1] = (mVel[1] > 0.f) ? mVel[1] : -mVel[1];
+    }
+
+    // This method will increment ship's position based on its velocity, until
+    // it reaches its target position
     public void update() {
         RectF newPosition = new RectF(mPos);
 
         // update the position
-        newPosition.left +=  mVel[0];
-        newPosition.top += mVel[1];
-        newPosition.right = newPosition.left + mImageSize[0];
-        newPosition.bottom = newPosition.top + mImageSize[1];
+        if (mThrust) {
+            newPosition.top += mVel[1];
+            newPosition.left +=  mVel[0];
+            newPosition.right = newPosition.left + mImageSize[0];
+            newPosition.bottom = newPosition.top + mImageSize[1];
 
-        Log.e(TAG, "Screen= " + SCREEN_WIDTH + " x " + SCREEN_HEIGHT);
-        Log.e(TAG, "New pos= " + newPosition.left + ", " + newPosition.top + ", " + newPosition.right + ", " + newPosition.bottom);
-        // out of bounds?
-        if(newPosition.right > SCREEN_WIDTH || newPosition.left < 0 ||
-           newPosition.bottom > SCREEN_HEIGHT || newPosition.top <0) {
-            newPosition = mPos;
+            // out of bounds?
+            if (newPosition.right > SCREEN_WIDTH || newPosition.left < 0 ||
+                newPosition.bottom > SCREEN_HEIGHT || newPosition.top < 0) {
+                newPosition = mPos;
+            }
         }
 
         mPos = newPosition;
