@@ -1,15 +1,16 @@
 package com.android.spaceship;
 
 import android.support.v7.app.ActionBarActivity;
-import android.support.v7.app.ActionBar;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.os.Build;
+import android.view.Window;
+import android.view.WindowManager;
 
 import com.android.ui.USpaceShipView;
 
@@ -18,9 +19,14 @@ public class SpaceshipActivity extends ActionBarActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //setContentView(R.layout.activity_spaceship);
-        View emptyView = new USpaceShipView(this);
-        setContentView(emptyView);
+
+        // Remove title bar fom the window
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
+        // Load a custom view
+        View spaceShipView = new USpaceShipView(this);
+        setContentView(spaceShipView);
     }
 
     @Override
@@ -58,5 +64,7 @@ public class SpaceshipActivity extends ActionBarActivity {
             return rootView;
         }
     }
+
+    private static final String TAG = "com.android.ui.SpaceshipActivity";
 
 }

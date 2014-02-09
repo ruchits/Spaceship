@@ -6,7 +6,6 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.util.Log;
 import android.graphics.RectF;
 
@@ -16,47 +15,57 @@ import com.android.spaceship.R;
 /**
  * Created by ruchitsharma on 2/7/2014.
  */
-public class USpaceShipView extends View {
 
-    ImageInfo mShipInfo;
-    Context mContext;
-    private static final String TAG = "com.android.ui.USpaceShieView";
+/*
+ * This is the 2-D view for the game.
+ * It is responsible for drawing all objects in the game.
+ */
+public class USpaceShipView extends View {
 
     public USpaceShipView(Context context) {
         super(context);
-        init();
         mContext = context;
+        init();
     }
 
+    /*
+     * Responsible for initializing all UI elements
+     */
     private void init() {
+        Log.e(TAG, "init ++");
         mPaint = new Paint();
         mPaint.setAntiAlias(true);
         mPaint.setFilterBitmap(true);
         mPaint.setDither(true);
 
         // Init a ship
-        float[] center = {45, 45};
-        float[] size = {90, 90};
-        mShipInfo = new ImageInfo(center, size, 35, 5, false); // few dummy values for now
+        float[] center = {45.f, 45.f};
+        float[] size = {90.f, 90.f};
+        mShipInfo = new ImageInfo(center, size, 35.f, 5.f, false); // few dummy values for now
+
+        RectF shipPos = new RectF(400, 400, 490, 490);
+        float[] shipVel = {0.f, 2.f};
+        mShip = new Ship(mContext, R.drawable.double_ship, shipPos, shipVel, 0, mShipInfo);
     }
 
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        Log.e(TAG, "onDraw++");
 
-        // decode the ship image into a bitmap.
-        // TODO: need to move this out of the draw call
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inPreferredConfig = Bitmap.Config.RGB_565;
-        Bitmap bmp = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.double_ship, options);
+        // draw the ship
+        mShip.draw(canvas, mPaint);
 
+        // update position
+        mShip.update();
 
-        //draw the ship on blank canvas
-        Log.e(TAG, "is bmp null?= " + (bmp == null));
-        Log.e(TAG, "is paint null?= " + (mPaint == null));
-        RectF dest = new RectF(10, 10, 45, 45);
-        canvas.drawBitmap(bmp, null, dest, mPaint);
-        bmp.recycle();
+        //invalidate the view
+        invalidate();
     }
 
     private Paint mPaint;
+    private ImageInfo mShipInfo;
+    private Ship mShip;
+
+    private Context mContext;
+    private static final String TAG = "com.android.ui.USpaceShipView";
 }

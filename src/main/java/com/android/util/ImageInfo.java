@@ -11,7 +11,7 @@ package com.android.util;
 public class ImageInfo {
     private float[] mCenter;
     private float[] mSize;
-    private float mRadius = 0;
+    private float mRadius = 0.f;
     private float mLifespan = Float.POSITIVE_INFINITY;
     boolean mAnimated = false;
 
@@ -24,23 +24,23 @@ public class ImageInfo {
         mAnimated = animated;
     }
 
-    public float[] get_center() {
+    public float[] getCenter() {
         return mCenter;
     }
 
-    public float[] get_size() {
+    public float[] getSize() {
         return mSize;
     }
 
-    public float get_radius() {
+    public float getRadius() {
         return mRadius;
     }
 
-    public float get_lifespan() {
+    public float getLifespan() {
         return mLifespan;
     }
 
-    public boolean get_animated() {
+    public boolean isAnimated() {
         return mAnimated;
     }
 }
