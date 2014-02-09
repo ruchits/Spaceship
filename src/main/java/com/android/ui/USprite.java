@@ -6,6 +6,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.Matrix;
 
 import com.android.spaceship.Global;
 import com.android.util.UBitmapUtil;
@@ -33,6 +34,7 @@ public class USprite {
         mImageIsAnimated = info.isAnimated();
 
         mBitmap = UBitmapUtil.loadBitmap(mContext, mResID, false);
+        mMatrix = new Matrix();
     }
 
     public RectF getPosition() {
@@ -46,13 +48,18 @@ public class USprite {
     // draw itself
     public void draw(Canvas canvas, Paint paint) {
         //canvas.draw_image(self.image, self.image_center, self.image_size, self.pos, self.image_size, self.angle)
-        canvas.drawBitmap(mBitmap, null, mPos, paint);
+        mMatrix.setRotate(mAngleVel);
+        Bitmap bmp = Bitmap.createBitmap(mBitmap, 0, 0, mBitmap.getWidth(), mBitmap.getHeight(), mMatrix, true);
+        canvas.drawBitmap(bmp, null, mPos, paint);
     }
 
     // This method will increment ship's position based on its velocity, until
     // it reaches its target position
     public void update() {
         RectF newPosition = new RectF(mPos);
+
+        // update the angular velocity
+        mAngleVel = (mAngleVel + 2.f)%360;
 
         // update the position
         newPosition.top += mVel[1];
@@ -73,6 +80,7 @@ public class USprite {
 
     private int mResID;
     private Bitmap mBitmap;
+    private Matrix mMatrix;
 
     private RectF mPos;
     private float[] mVel;

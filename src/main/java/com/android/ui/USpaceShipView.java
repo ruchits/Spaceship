@@ -59,10 +59,19 @@ public class USpaceShipView extends View {
         float[] shipVel = {0.f, 0.f};
         mUShip = new UShip(mContext, R.drawable.double_ship, shipPos, shipVel, 0, mShipInfo);
 
+        // Init pos
         mPrevPosition = new float[2];
         mPrevPosition[0] = shipPos.left;
         mPrevPosition[1] = shipPos.top;
 
+        // Init rocks
+        mRockInfo = new UImageInfo(center, size, 40.f, 5.f, false);
+
+        RectF rockPos = new RectF(900, 90, 990, 180);
+        float[] rockVel = {-5.f, 1.f};
+        mRock = new USprite(mContext, R.drawable.asteroid, rockPos, rockVel, 0, 0, mRockInfo);
+
+        // Init background anim resources
         mBgrdBitmap = UBitmapUtil.loadBitmap(mContext, R.drawable.nebula, false);
 
         float[] debrisCenter = {320.f, 240.f};
@@ -81,8 +90,13 @@ public class USpaceShipView extends View {
         // draw the ship
         mUShip.draw(canvas, mPaint);
 
+        // draw the rock
+        mRock.draw(canvas, mPaint);
+
         // update position
         mUShip.update();
+        mRock.update();
+
         invalidate();
     }
 
@@ -111,9 +125,14 @@ public class USpaceShipView extends View {
 
         if (actionCode == MotionEvent.ACTION_DOWN ||
             actionCode == MotionEvent.ACTION_MOVE) {
+
             Boolean motionDirectionUp = null;
-            if (y > mPrevPosition[1]) motionDirectionUp = false;
-            else if (y < mPrevPosition[1]) motionDirectionUp = true;
+            if (y > Global.SCREEN_HEIGHT/2) {
+                motionDirectionUp = false;
+            }
+            else {
+                motionDirectionUp = true;
+            }
 
             mUShip.setThrust(true);
             mUShip.notifyPosition(x, y, motionDirectionUp);
@@ -130,6 +149,8 @@ public class USpaceShipView extends View {
     private Paint mPaint;
     private UImageInfo mShipInfo;
     private UShip mUShip;
+    private UImageInfo mRockInfo;
+    private USprite mRock;
     private float[] mPrevPosition;
 
     private Bitmap mBgrdBitmap;
