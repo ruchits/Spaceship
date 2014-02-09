@@ -81,8 +81,10 @@ public class Ship {
         mThrust = enable;
     }
 
-    // determine the direction of velocity in y-direction
-    public void setDirectionUp(boolean directionUp) {
+    // determines how to change the direction based on the new touch location
+    public void notifyPosition(float x, float y) {
+        boolean directionUp = (y > mPos.top) ? false : true;
+
         if (directionUp)
             mVel[1] = (mVel[1] < 0.f) ? mVel[1] : -mVel[1];
         else
