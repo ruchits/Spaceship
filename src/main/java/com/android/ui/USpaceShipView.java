@@ -9,7 +9,6 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.Rect;
-import android.graphics.Matrix;
 import android.view.MotionEvent;
 import android.view.WindowManager;
 
@@ -91,7 +90,7 @@ public class USpaceShipView extends View {
 
         // spawn all rocks
         // TODO: rocks need to spawned at a certain time interval. Move this later.
-        mRockList = Collections.synchronizedList(new ArrayList<USprite>());
+        mRockList = Collections.synchronizedList(new ArrayList<URock>());
 
         // create a timer that will spawn rocks at regular intervals
         mTimer = new Timer();
@@ -104,8 +103,11 @@ public class USpaceShipView extends View {
 
     }
 
+    /*
+     * spawn rocks
+     */
     private void spawnRock() {
-        if(mRockList.size() >= 5)
+        if(mRockList.size() >= 2)
             return;
 
         Log.e(TAG, "Spawning a Rock");
@@ -120,7 +122,7 @@ public class USpaceShipView extends View {
         //RectF rockPos = new RectF(Global.SCREEN_WIDTH, top, Global.SCREEN_WIDTH+size[0], top+size[1]);
         RectF rockPos = new RectF(900, top, 900+size[0], top+size[1]);
         float[] rockVel = {-5.f, 1.f};
-        USprite rock = new USprite(mContext, R.drawable.asteroid, rockPos, rockVel, 0, 0, rockInfo);
+        URock rock = new URock(mContext, R.drawable.asteroid, rockPos, rockVel, 0, 0, rockInfo);
 
         synchronized (mRockList) {
             mRockList.add(rock);
@@ -141,18 +143,65 @@ public class USpaceShipView extends View {
         synchronized(mRockList) {
             Iterator it = mRockList.iterator();
             while(it.hasNext()) {
-                USprite rock = (USprite) it.next();
+                URock rock = (URock) it.next();
                 rock.draw(canvas, mPaint);
                 rock.update();
             }
         }
 
+        // Check for collision
+        group_collide(mRockList, mUShip);
+
         // update position
         mUShip.update();
+
+        // update rocks
+        synchronized(mRockList) {
+            Iterator it = mRockList.iterator();
+            while(it.hasNext()) {
+                URock rock = (URock) it.next();
+                rock.update();
+            }
+        }
 
         invalidate();
     }
 
+    // helper function to detect collision in groups
+    public boolean group_collide(List<URock> rockList, UShip ship) {
+        ArrayList<URock> removeRocks = new ArrayList<URock>();
+
+        synchronized(rockList) {
+            Iterator it = rockList.iterator();
+            while(it.hasNext()) {
+                URock rock = (URock) it.next();
+                if (rock.collide(ship)) {
+                removeRocks.add(rock);
+                }
+            }
+        }
+
+        //Log.e(TAG, "removeRocks - size= " + removeRocks.size());
+
+        if (removeRocks.size() == 0) {
+            return false;
+        }
+
+        synchronized(rockList) {
+            Iterator it = removeRocks.iterator();
+            while(it.hasNext()) {
+                URock rock = (URock) it.next();
+                rockList.remove(rock);
+            }
+        }
+
+        return true;
+    }
+
+
+    /*
+     * animate debris in the background
+     */
     private void animateDebris(Canvas canvas) {
         Rect fromRect1 = new Rect(0, 0, mDebrisBitmap.getWidth() - mDebrisScroll, mDebrisBitmap.getHeight());
         Rect toRect1 = new Rect(mDebrisScroll, 0, mDebrisBitmap.getWidth(), mDebrisBitmap.getHeight());
@@ -210,7 +259,7 @@ public class USpaceShipView extends View {
     private Paint mPaint;
     private UImageInfo mShipInfo;
     private UShip mUShip;
-    private List<USprite> mRockList;
+    private List<URock> mRockList;
     private float[] mPrevPosition;
 
     private Timer mTimer;
