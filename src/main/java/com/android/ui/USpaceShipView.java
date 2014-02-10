@@ -8,6 +8,8 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.graphics.Rect;
+import android.graphics.Matrix;
 import android.view.MotionEvent;
 import android.view.WindowManager;
 
@@ -39,8 +41,6 @@ public class USpaceShipView extends View {
         super(context);
         mContext = context;
 
-        init();
-
         // Get the screen width/height.
         WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         Display display = wm.getDefaultDisplay();
@@ -48,6 +48,8 @@ public class USpaceShipView extends View {
         display.getSize(size);
         Global.SCREEN_WIDTH= size.x;
         Global.SCREEN_HEIGHT = size.y;
+
+        init();
     }
 
     /*
@@ -79,7 +81,13 @@ public class USpaceShipView extends View {
         float[] debrisCenter = {320.f, 240.f};
         float[] debrisSize = {640.f, 480.f};
         mDebrisInfo = new UImageInfo(debrisCenter, debrisSize);
-        mDebrisBitmap = UBitmapUtil.loadBitmap(mContext, R.drawable.debris, false);
+        mDebrisBitmap = UBitmapUtil.loadScaledBitmap(mContext, R.drawable.debris,
+                Global.SCREEN_WIDTH, Global.SCREEN_HEIGHT, true);
+
+        //create a mirror image of the debris
+        mDebrisBitmapReversed = UBitmapUtil.loadBitmap(mContext, mDebrisBitmap);
+
+        mDebrisScroll = mDebrisBitmap.getWidth();
 
         // spawn all rocks
         // TODO: rocks need to spawned at a certain time interval. Move this later.
@@ -94,7 +102,6 @@ public class USpaceShipView extends View {
             }
         }, 0, 2000);
 
-        //spawnRocks();
     }
 
     private void spawnRock() {
@@ -147,18 +154,26 @@ public class USpaceShipView extends View {
     }
 
     private void animateDebris(Canvas canvas) {
-        // positioned in center
-        float left = (Global.SCREEN_WIDTH / 2) - (mDebrisInfo.getSize()[0] / 2);
-        float top = (Global.SCREEN_HEIGHT / 2) - (mDebrisInfo.getSize()[1] / 2);
+        Rect fromRect1 = new Rect(0, 0, mDebrisBitmap.getWidth() - mDebrisScroll, mDebrisBitmap.getHeight());
+        Rect toRect1 = new Rect(mDebrisScroll, 0, mDebrisBitmap.getWidth(), mDebrisBitmap.getHeight());
 
-        mAnimTime += 1;
-        float wtime = (mAnimTime / 4) % Global.SCREEN_WIDTH;
-        canvas.drawBitmap(mDebrisBitmap, null,
-                new RectF((wtime - left), top, (wtime - left + mDebrisInfo.getSize()[0]), (top + mDebrisInfo.getSize()[1])),
-                mPaint);
-        canvas.drawBitmap(mDebrisBitmap, null,
-                new RectF((wtime + left), top, (wtime + left + mDebrisInfo.getSize()[0]), (top + mDebrisInfo.getSize()[1])),
-                mPaint);
+        Rect fromRect2 = new Rect(mDebrisBitmap.getWidth() - mDebrisScroll, 0, mDebrisBitmap.getWidth(), mDebrisBitmap.getHeight());
+        Rect toRect2 = new Rect(0, 0, mDebrisScroll, mDebrisBitmap.getHeight());
+
+        if (!mReverseBackroundFirst) {
+            canvas.drawBitmap(mDebrisBitmap, fromRect1, toRect1, null);
+            canvas.drawBitmap(mDebrisBitmapReversed, fromRect2, toRect2, null);
+        }
+        else {
+            canvas.drawBitmap(mDebrisBitmap, fromRect2, toRect2, null);
+            canvas.drawBitmap(mDebrisBitmapReversed, fromRect1, toRect1, null);
+        }
+
+        //Next value for the background's position.
+        if ( (mDebrisScroll -= mAnimTime) <= 0) {
+            mDebrisScroll = mDebrisBitmap.getWidth();
+            mReverseBackroundFirst = !mReverseBackroundFirst;
+        }
     }
 
     @Override
@@ -203,7 +218,10 @@ public class USpaceShipView extends View {
     private Bitmap mBgrdBitmap;
     private UImageInfo mDebrisInfo;
     private Bitmap mDebrisBitmap;
-    private float mAnimTime = 0.5f;
+    private Bitmap mDebrisBitmapReversed;
+    private int mDebrisScroll;
+    boolean mReverseBackroundFirst;
+    private float mAnimTime = 1.f;
 
     private Context mContext;
     private static final String TAG = "com.android.ui.USpaceShipView";

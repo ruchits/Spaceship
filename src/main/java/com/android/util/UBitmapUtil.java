@@ -13,18 +13,14 @@ public class UBitmapUtil {
     {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inPreferredConfig = useRGB565 ? Bitmap.Config.RGB_565 : Bitmap.Config.ARGB_8888;
-        Bitmap tempBmp = BitmapFactory.decodeResource(context.getResources(), resID, options);
+        Bitmap bmp = BitmapFactory.decodeResource(context.getResources(), resID, options);
 
         //if no scaling needed, then return the bmp right away
-        if(tempBmp.getWidth() == width && tempBmp.getHeight() == height)
-            return tempBmp;
+        if(bmp.getWidth() == width && bmp.getHeight() == height)
+            return bmp;
 
         //otherwise, create a scaled bmp, recycling the old one
-        Bitmap retBmp = Bitmap.createScaledBitmap(
-                tempBmp,width, height, true);
-        tempBmp.recycle();
-
-        return retBmp;
+        return Bitmap.createScaledBitmap(bmp, width, height, true);
     }
 
     public static Bitmap loadBitmap(Context context, int resID, boolean useRGB565) {
@@ -32,5 +28,10 @@ public class UBitmapUtil {
         options.inPreferredConfig = useRGB565 ? Bitmap.Config.RGB_565 : Bitmap.Config.ARGB_8888;
         Bitmap bmp = BitmapFactory.decodeResource(context.getResources(), resID, options);
         return bmp;
+    }
+
+    public static Bitmap loadBitmap(Context context, Bitmap src) {
+        return Bitmap.createBitmap(src, 0, 0,
+            src.getWidth(), src.getHeight(), null, true);
     }
 }
