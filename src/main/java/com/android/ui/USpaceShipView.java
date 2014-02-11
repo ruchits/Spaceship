@@ -3,7 +3,8 @@ package com.android.ui;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.view.Display;
-import android.view.View;
+import android.view.SurfaceView;
+import android.view.SurfaceHolder;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -25,6 +26,7 @@ import com.android.spaceship.Global;
 import com.android.util.UImageInfo;
 import com.android.spaceship.R;
 import com.android.util.UBitmapUtil;
+import com.android.spaceship.GameThread;
 
 /**
  * Created by ruchitsharma on 2/7/2014.
@@ -34,7 +36,7 @@ import com.android.util.UBitmapUtil;
  * This is the 2-D view for the game.
  * It is responsible for drawing all objects in the game.
  */
-public class USpaceShipView extends View {
+public class USpaceShipView extends SurfaceView implements SurfaceHolder.Callback {
 
     public USpaceShipView(Context context) {
         super(context);
@@ -49,6 +51,12 @@ public class USpaceShipView extends View {
         Global.SCREEN_HEIGHT = size.y;
 
         init();
+
+        // set thread
+        getHolder().addCallback(this);
+
+        // set focusable to true
+        setFocusable(true);
     }
 
     /*
@@ -75,11 +83,8 @@ public class USpaceShipView extends View {
         mPrevPosition[1] = shipPos.top;
 
         // Init background anim resources
-        mBgrdBitmap = UBitmapUtil.loadBitmap(mContext, R.drawable.nebula, false);
+        mBgrdBitmap = UBitmapUtil.loadBitmap(mContext, R.drawable.nebula, true);
 
-        float[] debrisCenter = {320.f, 240.f};
-        float[] debrisSize = {640.f, 480.f};
-        mDebrisInfo = new UImageInfo(debrisCenter, debrisSize);
         mDebrisBitmap = UBitmapUtil.loadScaledBitmap(mContext, R.drawable.debris,
                 Global.SCREEN_WIDTH, Global.SCREEN_HEIGHT, true);
 
@@ -100,7 +105,51 @@ public class USpaceShipView extends View {
                 spawnRock();
             }
         }, 0, 1000);
+    }
 
+    @Override
+    public void onSizeChanged (int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        Global.SCREEN_WIDTH = w;
+        Global.SCREEN_HEIGHT = h;
+
+        // Init background anim resources
+        mBgrdBitmap = UBitmapUtil.loadScaledBitmap(mContext, R.drawable.nebula,
+                Global.SCREEN_WIDTH, Global.SCREEN_HEIGHT, true);
+
+        mDebrisBitmap = UBitmapUtil.loadScaledBitmap(mContext, R.drawable.debris,
+                Global.SCREEN_WIDTH, Global.SCREEN_HEIGHT, true);
+
+        //create a mirror image of the debris
+        mDebrisBitmapReversed = UBitmapUtil.loadBitmap(mContext, mDebrisBitmap);
+
+        mDebrisScroll = mDebrisBitmap.getWidth();
+    }
+
+
+    @Override
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+    }
+
+    @Override
+    public void surfaceCreated(SurfaceHolder holder) {
+        mGameThread = new GameThread(getHolder(), this);
+        mGameThread.setRunning(true);
+        mGameThread.start();
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {
+        boolean retry = true;
+        mGameThread.setRunning(false);
+        while (retry) {
+            try {
+                mGameThread.join();
+                retry = false;
+            } catch (InterruptedException e) {
+
+            }
+        }
     }
 
     /*
@@ -129,7 +178,7 @@ public class USpaceShipView extends View {
         mRockList.add(rock);
     }
 
-    protected void onDraw(Canvas canvas) {
+    public void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
         // animate the background
@@ -156,7 +205,14 @@ public class USpaceShipView extends View {
         // update rocks
         updateRocks(mRockList);
 
-        invalidate();
+        //Measure frame rate (unit: frames per second).
+        long now = System.currentTimeMillis();
+        framesCount++;
+        if(now-framesTimer>1000) {
+            framesTimer=now;
+            framesCountAvg=framesCount;
+            framesCount=0;
+        }
     }
 
     // helper function to detect collision in groups
@@ -244,6 +300,13 @@ public class USpaceShipView extends View {
         mPrevPosition[1] = y;
         return true;
     }
+
+    //Measure frames per second.
+    private int framesCount = 0;
+    private int framesCountAvg = 0;
+    private long framesTimer = 0;
+
+    private GameThread mGameThread;
 
     private Paint mPaint;
     private UImageInfo mShipInfo;

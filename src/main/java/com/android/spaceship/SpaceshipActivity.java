@@ -25,7 +25,7 @@ public class SpaceshipActivity extends ActionBarActivity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         // Load a custom view
-        View spaceShipView = new USpaceShipView(this);
+        USpaceShipView spaceShipView = new USpaceShipView(this);
         setContentView(spaceShipView);
     }
 

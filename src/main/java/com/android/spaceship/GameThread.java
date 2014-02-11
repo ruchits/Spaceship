@@ -1,0 +1,67 @@
+package com.android.spaceship;
+
+import android.graphics.Canvas;
+import android.view.SurfaceHolder;
+
+import com.android.ui.USpaceShipView;
+
+/**
+ * Created by ruchitsharma on 2/11/2014.
+ */
+public class GameThread extends Thread {
+    private SurfaceHolder mSurfaceHolder;
+    private USpaceShipView mGameView;
+    private boolean mRun = false;
+
+    public GameThread(SurfaceHolder surfaceHolder, USpaceShipView gameView) {
+        this.mSurfaceHolder = surfaceHolder;
+        this.mGameView = gameView;
+    }
+
+    public void setRunning(boolean run) {
+        this.mRun = run;
+    }
+
+    public SurfaceHolder getSurfaceHolder() {
+        return mSurfaceHolder;
+    }
+
+    @Override
+    public void run() {
+        Canvas c;
+        while (mRun) {
+            c = null;
+
+            //limit frame rate to max 60fps
+            timeNow = System.currentTimeMillis();
+            timeDelta = timeNow - timePrevFrame;
+            if ( timeDelta < 16) {
+                try {
+                    Thread.sleep(16 - timeDelta);
+                }
+                catch(InterruptedException e) {
+
+                }
+            }
+            timePrevFrame = System.currentTimeMillis();
+
+            try {
+                c = mSurfaceHolder.lockCanvas(null);
+                synchronized (mSurfaceHolder) {
+                    //call methods to draw and process next fame
+                    mGameView.onDraw(c);
+                }
+            } finally {
+                if (c != null) {
+                    mSurfaceHolder.unlockCanvasAndPost(c);
+                }
+            }
+        }
+    }
+
+    //Frame speed
+    private long timeNow;
+    private long timePrev = 0;
+    private long timePrevFrame = 0;
+    private long timeDelta;
+}
