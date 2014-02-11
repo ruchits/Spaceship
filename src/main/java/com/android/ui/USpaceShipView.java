@@ -63,7 +63,7 @@ public class USpaceShipView extends View {
         // Init a ship
         float[] center = {45.f, 45.f};
         float[] size = {90.f, 90.f};
-        mShipInfo = new UImageInfo(center, size, 35.f, 5.f, false); // few dummy values for now
+        mShipInfo = new UImageInfo(center, size, 35.f, Float.POSITIVE_INFINITY, false); // few dummy values for now
 
         RectF shipPos = new RectF(400, 400, 490, 490);
         float[] shipVel = {0.f, 0.f};
@@ -99,7 +99,7 @@ public class USpaceShipView extends View {
             public void run() {
                 spawnRock();
             }
-        }, 0, 2000);
+        }, 0, 1000);
 
     }
 
@@ -107,22 +107,24 @@ public class USpaceShipView extends View {
      * spawn rocks
      */
     private void spawnRock() {
-        if(mRockList.size() >= 5)
+        if(mRockList.size() >= 12)
             return;
 
-        Log.e(TAG, "Spawning a Rock");
         // Init rocks
         float[] center = {45.f, 45.f};
         float[] size = {90.f, 90.f};
         UImageInfo rockInfo = new UImageInfo(center, size, 40.f, 5.f, false);
 
         Random r = new Random();
-        int top = r.nextInt(Global.SCREEN_HEIGHT);
+        float left = Global.SCREEN_WIDTH-size[0]-1;
+        float top = (float) (r.nextInt(Global.SCREEN_HEIGHT - (int)size[1]));
+        float vel_x = -(r.nextFloat() * 5.f + 1.f);
+        float vel_y = r.nextFloat() * 2.f - 1.f;
 
-        //RectF rockPos = new RectF(Global.SCREEN_WIDTH, top, Global.SCREEN_WIDTH+size[0], top+size[1]);
-        RectF rockPos = new RectF(900, top, 900+size[0], top+size[1]);
-        float[] rockVel = {-5.f, 1.f};
-        URock rock = new URock(mContext, R.drawable.asteroid, rockPos, rockVel, 0, 0, rockInfo);
+        RectF rockPos = new RectF(left, top, left+size[0], top+size[1]);
+        float[] rockVel = {vel_x, vel_y};
+        float rockAngVel = r.nextFloat() * 4.f - 2.f;
+        URock rock = new URock(mContext, R.drawable.asteroid, rockPos, rockVel, 0, rockAngVel, rockInfo);
 
         mRockList.add(rock);
     }
@@ -152,28 +154,22 @@ public class USpaceShipView extends View {
         mUShip.update();
 
         // update rocks
-        it = mRockList.iterator();
-        while(it.hasNext()) {
-            URock rock = (URock) it.next();
-            rock.update();
-        }
+        updateRocks(mRockList);
 
         invalidate();
     }
 
     // helper function to detect collision in groups
-    public boolean group_collide(List<URock> rockList, UShip ship) {
+    private boolean group_collide(List<URock> rockList, UShip ship) {
         ArrayList<URock> removeRocks = new ArrayList<URock>();
 
         Iterator it = rockList.iterator();
         while(it.hasNext()) {
             URock rock = (URock) it.next();
-            if (rock.collide(ship)) {
-            removeRocks.add(rock);
+            if (rock.collide(ship) || !rock.isAlive()) {
+                removeRocks.add(rock);
             }
         }
-
-        //Log.e(TAG, "removeRocks - size= " + removeRocks.size());
 
         if (removeRocks.size() == 0) {
             return false;
@@ -184,6 +180,13 @@ public class USpaceShipView extends View {
         return true;
     }
 
+    private void updateRocks(List<URock> rockList) {
+        Iterator it = mRockList.iterator();
+        while(it.hasNext()) {
+            URock rock = (URock) it.next();
+            rock.update();
+        }
+    }
 
     /*
      * animate debris in the background
@@ -256,7 +259,7 @@ public class USpaceShipView extends View {
     private Bitmap mDebrisBitmapReversed;
     private int mDebrisScroll;
     boolean mReverseBackroundFirst;
-    private float mAnimTime = 1.f;
+    private float mAnimTime = 5.f;
 
     private Context mContext;
     private static final String TAG = "com.android.ui.USpaceShipView";

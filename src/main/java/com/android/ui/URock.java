@@ -23,6 +23,11 @@ public class URock extends USprite{
     public URock(Context context, int resID, RectF pos, float[] vel, float angle, float angleVel,
                  UImageInfo info) {
         super(context, resID, pos, vel, angle, angleVel, info);
+        /*
+        mBitmap = UBitmapUtil.loadScaledBitmap(mContext, mResID,
+               360, 360, true);
+        */
+        mBitmap = UBitmapUtil.loadBitmap(mContext, mResID, true);
     }
 
     // draw itself
@@ -54,6 +59,7 @@ public class URock extends USprite{
         }
         if (newPosition.right > Global.SCREEN_WIDTH || newPosition.left < 0) {
             // out of bounds. Lifespan over.
+            mAlive = false;
         }
 
         mPos = newPosition;

@@ -25,6 +25,7 @@ abstract class USprite {
         mAngle = angle;
         mAngleVel = angleVel;
         mResID = resID;
+        mAlive = true;
 
         mImageCenter = info.getCenter();
         mImageSize = info.getSize();
@@ -32,7 +33,6 @@ abstract class USprite {
         mImageLifeSpan = info.getLifespan();
         mImageIsAnimated = info.isAnimated();
 
-        mBitmap = UBitmapUtil.loadBitmap(mContext, mResID, false);
         mMatrix = new Matrix();
     }
 
@@ -43,6 +43,8 @@ abstract class USprite {
     public float getRadius() {
         return mImageRadius;
     }
+
+    public boolean isAlive() { return mAlive;}
 
     public Point getCenter() {
         Point center = new Point((int)(mPos.left+mImageSize[0]/2), (int)(mPos.top+mImageSize[1]/2));
@@ -60,6 +62,7 @@ abstract class USprite {
     protected int mResID;
     protected Bitmap mBitmap;
     protected Matrix mMatrix;
+    protected boolean mAlive;
 
     public RectF mPos;
     protected float[] mVel;

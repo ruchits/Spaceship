@@ -30,11 +30,12 @@ public class UShip extends USprite {
         mSourceShipWithThrust = new Rect(90, 0, 180, 90);
 
         mThrust = false;
+        mBitmap = UBitmapUtil.loadBitmap(mContext, mResID, true);
     }
 
     @Override
     public void draw(Canvas canvas, Paint paint) {
-        if (mThrust) {
+        if (!mThrust) {
             canvas.drawBitmap(mBitmap, mSourceShipWithThrust, mPos, paint);
         }
         else {
