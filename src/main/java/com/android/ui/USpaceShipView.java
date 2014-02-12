@@ -82,20 +82,18 @@ public class USpaceShipView extends SurfaceView implements SurfaceHolder.Callbac
         mPrevPosition[0] = shipPos.left;
         mPrevPosition[1] = shipPos.top;
 
-        // Init background anim resources
-        mBgrdBitmap = UBitmapUtil.loadBitmap(mContext, R.drawable.nebula, true);
+        mBgrdBitmap = UBitmapUtil.loadScaledBitmap(mContext, R.drawable.nebula,
+                Global.SCREEN_WIDTH, Global.SCREEN_HEIGHT, true);
+        mBgrdScroll = mBgrdBitmap.getWidth();
 
         mDebrisBitmap = UBitmapUtil.loadScaledBitmap(mContext, R.drawable.debris,
                 Global.SCREEN_WIDTH, Global.SCREEN_HEIGHT, true);
-
-        //create a mirror image of the debris
-        mDebrisBitmapReversed = UBitmapUtil.loadBitmap(mContext, mDebrisBitmap);
-
         mDebrisScroll = mDebrisBitmap.getWidth();
 
         // spawn all rocks
         // TODO: rocks need to spawned at a certain time interval. Move this later.
-        mRockList = new CopyOnWriteArrayList();
+        mActiveRockList = new CopyOnWriteArrayList();
+        mRockPool = new URockPool(12); // create a rock pool of size 12.
 
         // create a timer that will spawn rocks at regular intervals
         mTimer = new Timer();
@@ -109,23 +107,7 @@ public class USpaceShipView extends SurfaceView implements SurfaceHolder.Callbac
 
     @Override
     public void onSizeChanged (int w, int h, int oldw, int oldh) {
-        /*
-        super.onSizeChanged(w, h, oldw, oldh);
-        Global.SCREEN_WIDTH = w;
-        Global.SCREEN_HEIGHT = h;
-
-        // Init background anim resources
-        mBgrdBitmap = UBitmapUtil.loadScaledBitmap(mContext, R.drawable.nebula,
-                Global.SCREEN_WIDTH, Global.SCREEN_HEIGHT, true);
-
-        mDebrisBitmap = UBitmapUtil.loadScaledBitmap(mContext, R.drawable.debris,
-                Global.SCREEN_WIDTH, Global.SCREEN_HEIGHT, true);
-
-        //create a mirror image of the debris
-        mDebrisBitmapReversed = UBitmapUtil.loadBitmap(mContext, mDebrisBitmap);
-
-        mDebrisScroll = mDebrisBitmap.getWidth();
-        */
+        //ignore
     }
 
     @Override
@@ -160,41 +142,55 @@ public class USpaceShipView extends SurfaceView implements SurfaceHolder.Callbac
      * spawn rocks
      */
     private void spawnRock() {
-        if(mRockList.size() >= 5)
+        if(mActiveRockList.size() >= 5)
             return;
 
+        URock rock = null;
+
         // Init rocks
-        float[] center = {45.f, 45.f};
-        float[] size = {90.f, 90.f};
-        UImageInfo rockInfo = new UImageInfo(center, size, 40.f, 5.f, false);
+        if(!mRockPool.isEmpty()) {
+            rock = mRockPool.getRock();
+        }
+        else {
+            //Create a rock from scratch
+            float[] center = {45.f, 45.f};
+            float[] size = {90.f, 90.f};
+            UImageInfo rockInfo = new UImageInfo(center, size, 40.f, 5.f, false);
+
+            rock = new URock(mContext, R.drawable.asteroid, rockInfo);
+        }
+
+        Point rockSize = rock.getSize();
 
         Random r = new Random();
-        float left = Global.SCREEN_WIDTH-size[0]-1;
-        float top = (float) (r.nextInt(Global.SCREEN_HEIGHT - (int)size[1]));
+        float left = Global.SCREEN_WIDTH-rockSize.x-1;
+        float top = (float) (r.nextInt(Global.SCREEN_HEIGHT - (int)rockSize.y));
         //float vel_x = -(r.nextFloat() * 5.f + 1.f);
         float vel_x = -10.f;
         float vel_y = r.nextFloat() * 2.f - 1.f;
 
-        RectF rockPos = new RectF(left, top, left+size[0], top+size[1]);
+        RectF rockPos = new RectF(left, top, left+rockSize.x, top+rockSize.y);
         float[] rockVel = {vel_x, vel_y};
         float rockAngVel = r.nextFloat() * 4.f - 2.f;
-        URock rock = new URock(mContext, R.drawable.asteroid, rockPos, rockVel, 0, rockAngVel, rockInfo);
 
-        mRockList.add(rock);
+        rock.setAttributes(rockPos, rockVel, 0, rockAngVel, true);
+
+        mActiveRockList.add(rock);
     }
 
     public void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
         // animate the background
-        canvas.drawBitmap(mBgrdBitmap, null, new RectF(0,0,Global.SCREEN_WIDTH,Global.SCREEN_HEIGHT), mPaint);
+        //canvas.drawBitmap(mBgrdBitmap, null, new RectF(0,0,Global.SCREEN_WIDTH,Global.SCREEN_HEIGHT), mPaint);
+        animateBackground(canvas);
         animateDebris(canvas);
 
         // draw the ship
         mUShip.draw(canvas, mPaint);
 
         // draw all rocks in the list
-        Iterator it = mRockList.iterator();
+        Iterator it = mActiveRockList.iterator();
         while(it.hasNext()) {
             URock rock = (URock) it.next();
             rock.draw(canvas, mPaint);
@@ -202,13 +198,13 @@ public class USpaceShipView extends SurfaceView implements SurfaceHolder.Callbac
         }
 
         // Check for collision
-        group_collide(mRockList, mUShip);
+        group_collide(mActiveRockList, mUShip);
 
         // update position
         mUShip.update();
 
         // update rocks
-        updateRocks(mRockList);
+        updateRocks(mActiveRockList);
 
         //Measure frame rate (unit: frames per second).
         long now = System.currentTimeMillis();
@@ -229,6 +225,7 @@ public class USpaceShipView extends SurfaceView implements SurfaceHolder.Callbac
             URock rock = (URock) it.next();
             if (rock.collide(ship) || !rock.isAlive()) {
                 removeRocks.add(rock);
+                mRockPool.returnRock(rock);
             }
         }
 
@@ -242,7 +239,7 @@ public class USpaceShipView extends SurfaceView implements SurfaceHolder.Callbac
     }
 
     private void updateRocks(List<URock> rockList) {
-        Iterator it = mRockList.iterator();
+        Iterator it = mActiveRockList.iterator();
         while(it.hasNext()) {
             URock rock = (URock) it.next();
             rock.update();
@@ -250,7 +247,7 @@ public class USpaceShipView extends SurfaceView implements SurfaceHolder.Callbac
     }
 
     /*
-     * animate debris in the background
+     * animate debris
      */
     private void animateDebris(Canvas canvas) {
         Rect fromRect1 = new Rect(0, 0, mDebrisBitmap.getWidth() - mDebrisScroll, mDebrisBitmap.getHeight());
@@ -259,18 +256,41 @@ public class USpaceShipView extends SurfaceView implements SurfaceHolder.Callbac
         Rect fromRect2 = new Rect(mDebrisBitmap.getWidth() - mDebrisScroll, 0, mDebrisBitmap.getWidth(), mDebrisBitmap.getHeight());
         Rect toRect2 = new Rect(0, 0, mDebrisScroll, mDebrisBitmap.getHeight());
 
-        if (!mReverseBackroundFirst) {
+        if (!mReverseDebrisFirst) {
             canvas.drawBitmap(mDebrisBitmap, fromRect1, toRect1, null);
-            canvas.drawBitmap(mDebrisBitmapReversed, fromRect2, toRect2, null);
+            canvas.drawBitmap(mDebrisBitmap, fromRect2, toRect2, null);
         }
         else {
             canvas.drawBitmap(mDebrisBitmap, fromRect2, toRect2, null);
-            canvas.drawBitmap(mDebrisBitmapReversed, fromRect1, toRect1, null);
+            canvas.drawBitmap(mDebrisBitmap, fromRect1, toRect1, null);
+        }
+
+        //Next value for the debris's position.
+        if ( (mDebrisScroll -= mAnimDebrisTime) <= 0) {
+            mDebrisScroll = mDebrisBitmap.getWidth();
+            mReverseDebrisFirst = !mReverseDebrisFirst;
+        }
+    }
+
+    private void animateBackground(Canvas canvas) {
+        Rect fromRect1 = new Rect(0, 0, mBgrdBitmap.getWidth() - mBgrdScroll, mBgrdBitmap.getHeight());
+        Rect toRect1 = new Rect(mBgrdScroll, 0, mBgrdBitmap.getWidth(), mBgrdBitmap.getHeight());
+
+        Rect fromRect2 = new Rect(mBgrdBitmap.getWidth() - mBgrdScroll, 0, mBgrdBitmap.getWidth(), mBgrdBitmap.getHeight());
+        Rect toRect2 = new Rect(0, 0, mBgrdScroll, mBgrdBitmap.getHeight());
+
+        if (!mReverseBackroundFirst) {
+            canvas.drawBitmap(mBgrdBitmap, fromRect1, toRect1, null);
+            canvas.drawBitmap(mBgrdBitmap, fromRect2, toRect2, null);
+        }
+        else {
+            canvas.drawBitmap(mBgrdBitmap, fromRect2, toRect2, null);
+            canvas.drawBitmap(mBgrdBitmap, fromRect1, toRect1, null);
         }
 
         //Next value for the background's position.
-        if ( (mDebrisScroll -= mAnimTime) <= 0) {
-            mDebrisScroll = mDebrisBitmap.getWidth();
+        if ( (mBgrdScroll -= mAnimBgrdTime) <= 0) {
+            mBgrdScroll = mBgrdBitmap.getWidth();
             mReverseBackroundFirst = !mReverseBackroundFirst;
         }
     }
@@ -316,7 +336,8 @@ public class USpaceShipView extends SurfaceView implements SurfaceHolder.Callbac
     private Paint mPaint;
     private UImageInfo mShipInfo;
     private UShip mUShip;
-    private CopyOnWriteArrayList mRockList;
+    private CopyOnWriteArrayList mActiveRockList;
+    private URockPool mRockPool;
     private float[] mPrevPosition;
 
     private Timer mTimer;
@@ -326,8 +347,11 @@ public class USpaceShipView extends SurfaceView implements SurfaceHolder.Callbac
     private Bitmap mDebrisBitmap;
     private Bitmap mDebrisBitmapReversed;
     private int mDebrisScroll;
-    boolean mReverseBackroundFirst;
-    private float mAnimTime = 5.f;
+    private int mBgrdScroll;
+    private boolean mReverseBackroundFirst;
+    private boolean mReverseDebrisFirst;
+    private float mAnimDebrisTime = 5.f;
+    private float mAnimBgrdTime = 1.f;
 
     private Context mContext;
     private static final String TAG = "com.android.ui.USpaceShipView";

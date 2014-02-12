@@ -19,13 +19,13 @@ abstract class USprite {
     protected USprite(Context context, int resID, RectF pos, float[] vel,
                    float angle, float angleVel, UImageInfo info) {
         mContext = context;
+        mResID = resID;
+        mAlive = true;
 
         mPos = pos;
         mVel = vel;
         mAngle = angle;
         mAngleVel = angleVel;
-        mResID = resID;
-        mAlive = true;
 
         mImageCenter = info.getCenter();
         mImageSize = info.getSize();
@@ -39,6 +39,8 @@ abstract class USprite {
     public RectF getPosition() {
         return mPos;
     }
+
+    public Point getSize() { return new Point((int)mImageSize[0], (int)mImageSize[1]); }
 
     public float getRadius() {
         return mImageRadius;

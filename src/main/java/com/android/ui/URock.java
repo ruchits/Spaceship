@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Point;
 import android.graphics.Matrix;
@@ -18,24 +17,35 @@ import java.lang.Math;
 /**
  * Created by ruchitsharma on 2/9/2014.
  */
-public class URock extends USprite{
+public class URock extends USprite {
 
     public URock(Context context, int resID, RectF pos, float[] vel, float angle, float angleVel,
                  UImageInfo info) {
         super(context, resID, pos, vel, angle, angleVel, info);
-        /*
-        mBitmap = UBitmapUtil.loadScaledBitmap(mContext, mResID,
-               360, 360, true);
-        */
         mBitmap = UBitmapUtil.loadBitmap(mContext, mResID, true);
+    }
+
+    public URock(Context context, int resID, UImageInfo info) {
+        super(context, resID, null, null, 0.f, 0.f, info);
+        mBitmap = UBitmapUtil.loadBitmap(mContext, mResID, true);
+    }
+
+    public void setAttributes(RectF pos, float[] vel, float angle, float angleVel, boolean alive) {
+        mPos = pos;
+        mVel = vel;
+        mAngle = angle;
+        mAngleVel = angleVel;
+        mAlive = alive;
     }
 
     // draw itself
     @Override
     public void draw(Canvas canvas, Paint paint) {
-        mMatrix.setRotate(mAngleVel);
-        Bitmap bmp = Bitmap.createBitmap(mBitmap, 0, 0, mBitmap.getWidth(), mBitmap.getHeight(), mMatrix, true);
-        canvas.drawBitmap(bmp, null, mPos, paint);
+        if (mAlive) {
+            mMatrix.setRotate(mAngleVel);
+            Bitmap bmp = Bitmap.createBitmap(mBitmap, 0, 0, mBitmap.getWidth(), mBitmap.getHeight(), mMatrix, true);
+            canvas.drawBitmap(bmp, null, mPos, paint);
+        }
     }
 
     @Override
@@ -76,6 +86,7 @@ public class URock extends USprite{
                       );
 
         if (dist < (mImageRadius + object.getRadius())) {
+            mAlive = false;
             return true;
         }
 
