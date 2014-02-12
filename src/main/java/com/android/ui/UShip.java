@@ -94,7 +94,7 @@ public class UShip extends USprite {
     private Rect mSourceShipWithThrust;
 
     private static final float FRICTION = 0.05f;
-    private static final float VELOCITY[] = {0.f, 5.f};
+    private static final float VELOCITY[] = {0.f, 10.f};
 
     private static final String TAG = "com.android.ui.UShip";
 }

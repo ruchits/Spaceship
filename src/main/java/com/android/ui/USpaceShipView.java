@@ -109,6 +109,7 @@ public class USpaceShipView extends SurfaceView implements SurfaceHolder.Callbac
 
     @Override
     public void onSizeChanged (int w, int h, int oldw, int oldh) {
+        /*
         super.onSizeChanged(w, h, oldw, oldh);
         Global.SCREEN_WIDTH = w;
         Global.SCREEN_HEIGHT = h;
@@ -124,8 +125,8 @@ public class USpaceShipView extends SurfaceView implements SurfaceHolder.Callbac
         mDebrisBitmapReversed = UBitmapUtil.loadBitmap(mContext, mDebrisBitmap);
 
         mDebrisScroll = mDebrisBitmap.getWidth();
+        */
     }
-
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
@@ -141,13 +142,16 @@ public class USpaceShipView extends SurfaceView implements SurfaceHolder.Callbac
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
         boolean retry = true;
-        mGameThread.setRunning(false);
-        while (retry) {
-            try {
+        if (mGameThread != null) {
+            mGameThread.setRunning(false);
+
+            while (retry) {
+                try {
                 mGameThread.join();
                 retry = false;
-            } catch (InterruptedException e) {
+                } catch (InterruptedException e) {
 
+                }
             }
         }
     }
@@ -156,7 +160,7 @@ public class USpaceShipView extends SurfaceView implements SurfaceHolder.Callbac
      * spawn rocks
      */
     private void spawnRock() {
-        if(mRockList.size() >= 12)
+        if(mRockList.size() >= 5)
             return;
 
         // Init rocks
@@ -167,7 +171,8 @@ public class USpaceShipView extends SurfaceView implements SurfaceHolder.Callbac
         Random r = new Random();
         float left = Global.SCREEN_WIDTH-size[0]-1;
         float top = (float) (r.nextInt(Global.SCREEN_HEIGHT - (int)size[1]));
-        float vel_x = -(r.nextFloat() * 5.f + 1.f);
+        //float vel_x = -(r.nextFloat() * 5.f + 1.f);
+        float vel_x = -10.f;
         float vel_y = r.nextFloat() * 2.f - 1.f;
 
         RectF rockPos = new RectF(left, top, left+size[0], top+size[1]);

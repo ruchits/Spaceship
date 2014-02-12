@@ -20,6 +20,7 @@ public class GameThread extends Thread {
 
     public void setRunning(boolean run) {
         this.mRun = run;
+        if(!run) interrupt();
     }
 
     public SurfaceHolder getSurfaceHolder() {
@@ -29,7 +30,7 @@ public class GameThread extends Thread {
     @Override
     public void run() {
         Canvas c;
-        while (mRun) {
+        while (mRun && !Thread.interrupted()) {
             c = null;
 
             //limit frame rate to max 60fps
@@ -49,7 +50,9 @@ public class GameThread extends Thread {
                 c = mSurfaceHolder.lockCanvas(null);
                 synchronized (mSurfaceHolder) {
                     //call methods to draw and process next fame
-                    mGameView.onDraw(c);
+                    if (c != null) {
+                        mGameView.onDraw(c);
+                    }
                 }
             } finally {
                 if (c != null) {
