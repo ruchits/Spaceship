@@ -5,8 +5,8 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.graphics.Rect;
 import android.graphics.Point;
-import android.graphics.Matrix;
 
 import com.android.spaceship.Global;
 import com.android.util.UBitmapUtil;
@@ -42,9 +42,10 @@ public class URock extends USprite {
     @Override
     public void draw(Canvas canvas, Paint paint) {
         if (mAlive) {
-            mMatrix.setRotate(mAngleVel);
-            Bitmap bmp = Bitmap.createBitmap(mBitmap, 0, 0, mBitmap.getWidth(), mBitmap.getHeight(), mMatrix, true);
-            canvas.drawBitmap(bmp, null, mPos, paint);
+            canvas.save();
+            canvas.rotate(mAngleVel, getCenter().x, getCenter().y);
+            canvas.drawBitmap(mBitmap, null, mPos, paint);
+            canvas.restore();
         }
     }
 

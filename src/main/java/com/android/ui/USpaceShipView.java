@@ -208,6 +208,7 @@ public class USpaceShipView extends SurfaceView implements SurfaceHolder.Callbac
 
         //Measure frame rate (unit: frames per second).
         long now = System.currentTimeMillis();
+        Log.e(TAG, framesCountAvg + " fps");
         framesCount++;
         if(now-framesTimer>1000) {
             framesTimer=now;
