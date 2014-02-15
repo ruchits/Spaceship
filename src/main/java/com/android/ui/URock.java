@@ -42,10 +42,11 @@ public class URock extends USprite {
     @Override
     public void draw(Canvas canvas, Paint paint) {
         if (mAlive) {
-            canvas.save();
-            canvas.rotate(mAngleVel, getCenter().x, getCenter().y);
+            //TODO: enable rotation back - perf choices
+            //canvas.save();
+            //canvas.rotate(mAngleVel, getCenter().x, getCenter().y);
             canvas.drawBitmap(mBitmap, null, mPos, paint);
-            canvas.restore();
+            //canvas.restore();
         }
     }
 

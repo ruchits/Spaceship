@@ -9,13 +9,12 @@ import com.android.ui.USpaceShipView;
  * Created by ruchitsharma on 2/11/2014.
  */
 public class GameThread extends Thread {
-    private SurfaceHolder mSurfaceHolder;
-    private USpaceShipView mGameView;
-    private boolean mRun = false;
 
-    public GameThread(SurfaceHolder surfaceHolder, USpaceShipView gameView) {
+    public GameThread(SurfaceHolder surfaceHolder, USpaceShipView gameView,
+            GameEngine engine) {
         this.mSurfaceHolder = surfaceHolder;
         this.mGameView = gameView;
+        this.mEngine = engine;
     }
 
     public void setRunning(boolean run) {
@@ -51,7 +50,7 @@ public class GameThread extends Thread {
                 synchronized (mSurfaceHolder) {
                     //call methods to draw and process next fame
                     if (c != null) {
-                        mGameView.onDraw(c);
+                        mEngine.onDraw(c);
                     }
                 }
             } finally {
@@ -67,4 +66,9 @@ public class GameThread extends Thread {
     private long timePrev = 0;
     private long timePrevFrame = 0;
     private long timeDelta;
+
+    private GameEngine mEngine;
+    private SurfaceHolder mSurfaceHolder;
+    private USpaceShipView mGameView;
+    private boolean mRun = false;
 }
