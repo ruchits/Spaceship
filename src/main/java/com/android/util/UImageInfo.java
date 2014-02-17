@@ -18,14 +18,14 @@ public class UImageInfo {
     private int mTiles;
 
     public UImageInfo(int resID, float[] center, float[] size, float radius,
-                      float lifespan, boolean animated, int mTiles) {
+                      float lifespan, boolean animated, int tiles) {
         mResID = resID;
         mCenter = center;
         mSize = size;
         mRadius = radius;
         mLifespan = lifespan;
         mAnimated = animated;
-        mTiles = 0;
+        mTiles = tiles;
     }
 
     public UImageInfo(float[] center, float[] size) {

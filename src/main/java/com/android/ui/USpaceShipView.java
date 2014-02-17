@@ -48,7 +48,6 @@ public class USpaceShipView extends SurfaceView implements SurfaceHolder.Callbac
      */
     private void init() {
         mEngine = new GameEngine(mContext);
-
         setFocusable(true);
     }
 

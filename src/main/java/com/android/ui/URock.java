@@ -36,8 +36,10 @@ public class URock extends USprite {
 
         mExplosionTileIndex = 0;
         mExplosionInfo = expInfo;
+        Log.e(TAG, "wxh= " + expInfo.getSize()[0] + "x"  + expInfo.getSize()[1]);
+        Log.e(TAG, "tiles= " + expInfo.getNumTiles());
         mExplosionBitmap = UBitmapUtil.loadScaledBitmap(mContext, expInfo.getResID(),
-                            (int)(expInfo.getSize()[1] * expInfo.getNumTiles()),
+                            (int)(expInfo.getSize()[0] * expInfo.getNumTiles()),
                             (int)expInfo.getSize()[1], true);
     }
 

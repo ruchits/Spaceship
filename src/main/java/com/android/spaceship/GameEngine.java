@@ -39,6 +39,9 @@ public class GameEngine {
         mPaint.setFilterBitmap(true);
         mPaint.setDither(true);
 
+        // Set current level to easy.
+        CURRENT_LEVEL = LEVEL_EASY;
+
         // Init a ship
         float[] center = {45.f, 45.f};
         float[] size = {90.f, 90.f};
@@ -49,11 +52,7 @@ public class GameEngine {
         float[] shipVel = {0.f, 0.f};
         mUShip = new UShip(mContext, shipPos, shipVel, 0, mShipInfo);
 
-        // Init pos
-        mPrevPosition = new float[2];
-        mPrevPosition[0] = shipPos.left;
-        mPrevPosition[1] = shipPos.top;
-
+        // Create background resources
         mBgrdBitmap = UBitmapUtil.loadScaledBitmap(mContext, R.drawable.nebula,
                 Global.SCREEN_WIDTH, Global.SCREEN_HEIGHT, true);
         mBgrdScroll = mBgrdBitmap.getWidth();
@@ -62,56 +61,90 @@ public class GameEngine {
                 Global.SCREEN_WIDTH, Global.SCREEN_HEIGHT, true);
         mDebrisScroll = mDebrisBitmap.getWidth();
 
-        // spawn all rocks
-        // TODO: rocks need to spawned at a certain time interval. Move this later.
+        // initialize a set of rocks
+        mRockPool = new URockPool(INIT_NUM_ROCKS);
+        for (int i = 0; i < INIT_NUM_ROCKS; i++) {
+            URock rock = createRock();
+            mRockPool.returnRock(rock);
+        }
         mActiveRockList = new CopyOnWriteArrayList();
-        mRockPool = new URockPool(12); // create a rock pool of size 12.
+
+        mNumRocksDodged = 0;
 
         // create a timer that will spawn rocks at regular intervals
         mTimer = new Timer();
         mTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                spawnRocks();
+                int low, high;
+
+                switch(CURRENT_LEVEL) {
+                    case LEVEL_EASY:
+                        low = 1;
+                        high = 2;
+                        break;
+                    case LEVEL_MEDIUM:
+                        low = 1;
+                        high = 3;
+                        break;
+                    case LEVEL_HARD:
+                        low = 2;
+                        high = 3;
+                        break;
+                    default:
+                        low = 1;
+                        high = 1;
+                }
+                spawnRocks(low, high);
             }
         }, 0, 1000);
     }
 
     /*
-    * spawn rocks
+     * helper method to create a rock
+     */
+    private URock createRock() {
+        //Create a rock from scratch
+        float[] center = {45.f, 45.f};
+        float[] size = {90.f, 90.f};
+        UImageInfo rockInfo = new UImageInfo(R.drawable.asteroid, center,
+                size, 40.f, 5.f, false, 0);
+
+        // setup explosion info
+        float[] expCenter = {64.f, 64.f};
+        float[] expSize = {128.f, 128.f};
+        UImageInfo explosionInfo = new UImageInfo(R.drawable.explosion_blue, expCenter,
+                expSize, 17.f, 24, true, 24);
+
+        return new URock(mContext, rockInfo, explosionInfo);
+    }
+
+    /*
+    * spawn rocks - number is chosen randomly between {low, high}
     */
-    private void spawnRocks() {
+    private void spawnRocks(int low, int high) {
+        // let's not spam the screen
         if(mActiveRockList.size() >= MAX_NUM_ROCKS)
             return;
 
-        URock rock = null;
+        // choose at random how many do we want to span
+        Random r = new Random();
+        int numRocks = Math.round(r.nextFloat() * (high - low) + low);
 
-        for (int i = 0; i < MAX_SPAWN_ROCKS; i++) {
+        URock rock = null;
+        for (int i = 0; i < numRocks; i++) {
             // Init rocks
             if(!mRockPool.isEmpty()) {
             rock = mRockPool.getRock();
             }
             else {
-                //Create a rock from scratch
-                float[] center = {45.f, 45.f};
-                float[] size = {90.f, 90.f};
-                UImageInfo rockInfo = new UImageInfo(R.drawable.asteroid, center,
-                                                    size, 40.f, 5.f, false, 0);
-
-                // setup explosion info
-                float[] expCenter = {64.f, 64.f};
-                float[] expSize = {128.f, 128.f};
-                UImageInfo explosionInfo = new UImageInfo(R.drawable.explosion_blue, expCenter,
-                                                    expSize, 17.f, 24, true, 24);
-
-                rock = new URock(mContext, rockInfo, explosionInfo);
+                rock = createRock();
             }
 
             Point rockSize = rock.getSize();
-
-            Random r = new Random();
             float left = Global.SCREEN_WIDTH-rockSize.x-1;
             float top = (float) (r.nextInt(Global.SCREEN_HEIGHT - (int)rockSize.y));
+
             //float vel_x = -(r.nextFloat() * 5.f + 1.f);
             float vel_x = -5.f;
             float vel_y = r.nextFloat() * 2.f - 1.f;
@@ -165,12 +198,14 @@ public class GameEngine {
 
     // helper function to detect collision in groups
     private boolean group_collide(List<URock> rockList, UShip ship) {
+        int numRocksCollided = 0;
         ArrayList<URock> removeRocks = new ArrayList<URock>();
 
         Iterator it = rockList.iterator();
         while(it.hasNext()) {
             URock rock = (URock) it.next();
-            rock.collide(ship);
+            if (rock.collide(ship))
+                numRocksCollided += 1;
 
             //if (rock.collide(ship) || !rock.isAlive()) {
             if (!rock.isAlive()) {
@@ -182,6 +217,9 @@ public class GameEngine {
         if (removeRocks.size() == 0) {
             return false;
         }
+
+        // for now just assume that all rocks were dodged
+        mNumRocksDodged += removeRocks.size();
 
         rockList.removeAll(removeRocks);
 
@@ -270,25 +308,29 @@ public class GameEngine {
             mUShip.setThrust(false);
         }
 
-        mPrevPosition[0] = x;
-        mPrevPosition[1] = y;
         return true;
     }
+
+    // Level of difficulty
+    private final int LEVEL_EASY = 1;
+    private final int LEVEL_MEDIUM = 2;
+    private final int LEVEL_HARD = 3;
+    private int CURRENT_LEVEL;
+    private static int mNumRocksDodged;
 
     //Measure frames per second.
     private int framesCount = 0;
     private int framesCountAvg = 0;
     private long framesTimer = 0;
 
-    private final int MAX_NUM_ROCKS = 12;
-    private final int MAX_SPAWN_ROCKS = 2;
+    private final int MAX_NUM_ROCKS = 20;
+    private final int INIT_NUM_ROCKS = 10;
 
     private Paint mPaint;
     private UImageInfo mShipInfo;
     private UShip mUShip;
     private CopyOnWriteArrayList mActiveRockList;
     private URockPool mRockPool;
-    private float[] mPrevPosition;
 
     private Timer mTimer;
 
