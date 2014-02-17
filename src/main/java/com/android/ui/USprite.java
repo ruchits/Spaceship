@@ -16,16 +16,16 @@ import com.android.util.UImageInfo;
  */
 abstract class USprite {
 
-    protected USprite(Context context, int resID, RectF pos, float[] vel,
+    protected USprite(Context context, RectF pos, float[] vel,
                    float angle, float angleVel, UImageInfo info) {
         mContext = context;
-        mResID = resID;
         mAlive = true;
 
         mPos = pos;
         mVel = vel;
         mAngle = angle;
         mAngleVel = angleVel;
+        mAnimated = false;
 
         mImageCenter = info.getCenter();
         mImageSize = info.getSize();
@@ -61,7 +61,6 @@ abstract class USprite {
 
     protected Context mContext;
 
-    protected int mResID;
     protected Bitmap mBitmap;
     protected Matrix mMatrix;
     protected boolean mAlive;
@@ -77,4 +76,5 @@ abstract class USprite {
     public float mImageRadius;
     protected float mImageLifeSpan;
     protected boolean mImageIsAnimated;
+    protected boolean mAnimated;
 }

@@ -9,25 +9,31 @@ package com.android.util;
  * about an image.
  */
 public class UImageInfo {
+    private int mResID;
     private float[] mCenter;
     private float[] mSize;
     private float mRadius = 0.f;
     private float mLifespan = Float.POSITIVE_INFINITY;
     boolean mAnimated = false;
+    private int mTiles;
 
-    public UImageInfo(float[] center, float[] size, float radius,
-                      float lifespan, boolean animated) {
+    public UImageInfo(int resID, float[] center, float[] size, float radius,
+                      float lifespan, boolean animated, int mTiles) {
+        mResID = resID;
         mCenter = center;
         mSize = size;
         mRadius = radius;
         mLifespan = lifespan;
         mAnimated = animated;
+        mTiles = 0;
     }
 
     public UImageInfo(float[] center, float[] size) {
         mCenter = center;
         mSize = size;
     }
+
+    public int getResID() { return mResID; }
 
     public float[] getCenter() {
         return mCenter;
@@ -48,4 +54,6 @@ public class UImageInfo {
     public boolean isAnimated() {
         return mAnimated;
     }
+
+    public int getNumTiles() { return mTiles; }
 }

@@ -22,15 +22,15 @@ import android.util.Log;
  */
 public class UShip extends USprite {
 
-    public UShip(Context context, int resID, RectF pos, float[] vel, float angle, UImageInfo info) {
-        super(context, resID, pos, vel, angle, 0, info);
+    public UShip(Context context, RectF pos, float[] vel, float angle, UImageInfo info) {
+        super(context, pos, vel, angle, 0, info);
 
         // get the source rect for each ship
-        mSourceShip = new Rect(0, 0, 90, 90);
-        mSourceShipWithThrust = new Rect(90, 0, 180, 90);
+        mSourceShip = new Rect(0, 0, getSize().x, getSize().y);
+        mSourceShipWithThrust = new Rect(getSize().x, 0, 2 * getSize().x, getSize().y);
 
         mThrust = false;
-        mBitmap = UBitmapUtil.loadBitmap(mContext, mResID, true);
+        mBitmap = UBitmapUtil.loadBitmap(mContext, info.getResID(), true);
     }
 
     @Override

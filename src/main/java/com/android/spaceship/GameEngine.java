@@ -42,11 +42,12 @@ public class GameEngine {
         // Init a ship
         float[] center = {45.f, 45.f};
         float[] size = {90.f, 90.f};
-        mShipInfo = new UImageInfo(center, size, 35.f, Float.POSITIVE_INFINITY, false); // few dummy values for now
+        mShipInfo = new UImageInfo(R.drawable.double_ship, center,
+                        size, 35.f, Float.POSITIVE_INFINITY, false, 0); // few dummy values for now
 
         RectF shipPos = new RectF(400, 400, 490, 490);
         float[] shipVel = {0.f, 0.f};
-        mUShip = new UShip(mContext, R.drawable.double_ship, shipPos, shipVel, 0, mShipInfo);
+        mUShip = new UShip(mContext, shipPos, shipVel, 0, mShipInfo);
 
         // Init pos
         mPrevPosition = new float[2];
@@ -71,7 +72,7 @@ public class GameEngine {
         mTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                spawnRock();
+                spawnRocks();
             }
         }, 0, 1000);
     }
@@ -79,47 +80,55 @@ public class GameEngine {
     /*
     * spawn rocks
     */
-    private void spawnRock() {
-        if(mActiveRockList.size() >= 5)
+    private void spawnRocks() {
+        if(mActiveRockList.size() >= MAX_NUM_ROCKS)
             return;
 
         URock rock = null;
 
-        // Init rocks
-        if(!mRockPool.isEmpty()) {
+        for (int i = 0; i < MAX_SPAWN_ROCKS; i++) {
+            // Init rocks
+            if(!mRockPool.isEmpty()) {
             rock = mRockPool.getRock();
+            }
+            else {
+                //Create a rock from scratch
+                float[] center = {45.f, 45.f};
+                float[] size = {90.f, 90.f};
+                UImageInfo rockInfo = new UImageInfo(R.drawable.asteroid, center,
+                                                    size, 40.f, 5.f, false, 0);
+
+                // setup explosion info
+                float[] expCenter = {64.f, 64.f};
+                float[] expSize = {128.f, 128.f};
+                UImageInfo explosionInfo = new UImageInfo(R.drawable.explosion_blue, expCenter,
+                                                    expSize, 17.f, 24, true, 24);
+
+                rock = new URock(mContext, rockInfo, explosionInfo);
+            }
+
+            Point rockSize = rock.getSize();
+
+            Random r = new Random();
+            float left = Global.SCREEN_WIDTH-rockSize.x-1;
+            float top = (float) (r.nextInt(Global.SCREEN_HEIGHT - (int)rockSize.y));
+            //float vel_x = -(r.nextFloat() * 5.f + 1.f);
+            float vel_x = -5.f;
+            float vel_y = r.nextFloat() * 2.f - 1.f;
+
+            RectF rockPos = new RectF(left, top, left+rockSize.x, top+rockSize.y);
+            float[] rockVel = {vel_x, vel_y};
+            float rockAngVel = r.nextFloat() * 4.f - 2.f;
+
+            rock.setAttributes(rockPos, rockVel, 0, rockAngVel, true);
+
+            mActiveRockList.add(rock);
         }
-        else {
-            //Create a rock from scratch
-            float[] center = {45.f, 45.f};
-            float[] size = {90.f, 90.f};
-            UImageInfo rockInfo = new UImageInfo(center, size, 40.f, 5.f, false);
-
-            rock = new URock(mContext, R.drawable.asteroid, rockInfo);
-        }
-
-        Point rockSize = rock.getSize();
-
-        Random r = new Random();
-        float left = Global.SCREEN_WIDTH-rockSize.x-1;
-        float top = (float) (r.nextInt(Global.SCREEN_HEIGHT - (int)rockSize.y));
-        //float vel_x = -(r.nextFloat() * 5.f + 1.f);
-        float vel_x = -5.f;
-        float vel_y = r.nextFloat() * 2.f - 1.f;
-
-        RectF rockPos = new RectF(left, top, left+rockSize.x, top+rockSize.y);
-        float[] rockVel = {vel_x, vel_y};
-        float rockAngVel = r.nextFloat() * 4.f - 2.f;
-
-        rock.setAttributes(rockPos, rockVel, 0, rockAngVel, true);
-
-        mActiveRockList.add(rock);
     }
 
     public void onDraw(Canvas canvas) {
 
         // animate the background
-        //canvas.drawBitmap(mBgrdBitmap, null, new RectF(0,0,Global.SCREEN_WIDTH,Global.SCREEN_HEIGHT), mPaint);
         animateBackground(canvas);
         animateDebris(canvas);
 
@@ -161,7 +170,10 @@ public class GameEngine {
         Iterator it = rockList.iterator();
         while(it.hasNext()) {
             URock rock = (URock) it.next();
-            if (rock.collide(ship) || !rock.isAlive()) {
+            rock.collide(ship);
+
+            //if (rock.collide(ship) || !rock.isAlive()) {
+            if (!rock.isAlive()) {
                 removeRocks.add(rock);
                 mRockPool.returnRock(rock);
             }
@@ -268,6 +280,8 @@ public class GameEngine {
     private int framesCountAvg = 0;
     private long framesTimer = 0;
 
+    private final int MAX_NUM_ROCKS = 12;
+    private final int MAX_SPAWN_ROCKS = 2;
 
     private Paint mPaint;
     private UImageInfo mShipInfo;
@@ -279,9 +293,7 @@ public class GameEngine {
     private Timer mTimer;
 
     private Bitmap mBgrdBitmap;
-    private UImageInfo mDebrisInfo;
     private Bitmap mDebrisBitmap;
-    private Bitmap mDebrisBitmapReversed;
     private int mDebrisScroll;
     private int mBgrdScroll;
     private boolean mReverseBackroundFirst;
