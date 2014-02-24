@@ -25,6 +25,7 @@ public class URock extends USprite {
         super(context, pos, vel, angle, angleVel, info);
         mBitmap = UBitmapUtil.loadBitmap(mContext, info.getResID(), true);
 
+        isRotating = false;
         mExplosionTileIndex = 0;
         mExplosionInfo = expInfo;
         mExplosionBitmap = UBitmapUtil.loadBitmap(mContext, expInfo.getResID(), true);
@@ -60,11 +61,14 @@ public class URock extends USprite {
                 boolean end = animateExplosion(canvas, paint);
                 mAlive = !end;
             }
-            else {
+            else if(isRotating) {
                 canvas.save();
                 canvas.rotate(mAngleVel, getCenter().x, getCenter().y);
                 canvas.drawBitmap(mBitmap, null, mPos, paint);
                 canvas.restore();
+            }
+            else {
+                canvas.drawBitmap(mBitmap, null, mPos, paint);
             }
         }
     }
@@ -141,6 +145,7 @@ public class URock extends USprite {
     private UImageInfo mExplosionInfo;
     private Bitmap mExplosionBitmap;
     private int mExplosionTileIndex;
+    private boolean isRotating;
 
     private static final String TAG = "com.android.ui.URock";
 }

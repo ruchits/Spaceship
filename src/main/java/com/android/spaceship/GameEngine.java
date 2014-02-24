@@ -23,6 +23,7 @@ import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
+import android.os.AsyncTask;
 
 /**
  * Created by ruchitsharma on 2/14/2014.
@@ -60,6 +61,7 @@ public class GameEngine {
         mDebrisBitmap = UBitmapUtil.loadScaledBitmap(mContext, R.drawable.debris,
                 Global.SCREEN_WIDTH, Global.SCREEN_HEIGHT, true);
         mDebrisScroll = mDebrisBitmap.getWidth();
+        mDebrisReversedBitmap = mDebrisBitmap;
 
         // initialize a set of rocks
         mRockPool = new URockPool(INIT_NUM_ROCKS);
@@ -69,7 +71,7 @@ public class GameEngine {
         }
         mActiveRockList = new CopyOnWriteArrayList();
 
-        mNumRocksDodged = 0;
+        setRocksDodged(0);
 
         // create a timer that will spawn rocks at regular intervals
         mTimer = new Timer();
@@ -84,16 +86,16 @@ public class GameEngine {
                         high = 2;
                         break;
                     case LEVEL_MEDIUM:
-                        low = 1;
-                        high = 3;
-                        break;
-                    case LEVEL_HARD:
                         low = 2;
                         high = 3;
                         break;
+                    case LEVEL_HARD:
+                        low = 3;
+                        high = 4;
+                        break;
                     default:
                         low = 1;
-                        high = 1;
+                        high = 2;
                 }
                 spawnRocks(low, high);
             }
@@ -219,7 +221,7 @@ public class GameEngine {
         }
 
         // for now just assume that all rocks were dodged
-        mNumRocksDodged += removeRocks.size();
+        setRocksDodged(removeRocks.size());
 
         rockList.removeAll(removeRocks);
 
@@ -238,19 +240,25 @@ public class GameEngine {
      * animate debris
      */
     private void animateDebris(Canvas canvas) {
+        // for now do a dump replacement of debris bitmap
+        if (mDebrisNextBitmap != null) {
+            mDebrisBitmap = mDebrisReversedBitmap = mDebrisNextBitmap;
+            mDebrisNextBitmap = null;
+        }
+
         Rect fromRect1 = new Rect(0, 0, mDebrisBitmap.getWidth() - mDebrisScroll, mDebrisBitmap.getHeight());
         Rect toRect1 = new Rect(mDebrisScroll, 0, mDebrisBitmap.getWidth(), mDebrisBitmap.getHeight());
 
-        Rect fromRect2 = new Rect(mDebrisBitmap.getWidth() - mDebrisScroll, 0, mDebrisBitmap.getWidth(), mDebrisBitmap.getHeight());
-        Rect toRect2 = new Rect(0, 0, mDebrisScroll, mDebrisBitmap.getHeight());
+        Rect fromRect2 = new Rect(mDebrisReversedBitmap.getWidth() - mDebrisScroll, 0, mDebrisReversedBitmap.getWidth(), mDebrisReversedBitmap.getHeight());
+        Rect toRect2 = new Rect(0, 0, mDebrisScroll, mDebrisReversedBitmap.getHeight());
 
         if (!mReverseDebrisFirst) {
             canvas.drawBitmap(mDebrisBitmap, fromRect1, toRect1, null);
             canvas.drawBitmap(mDebrisBitmap, fromRect2, toRect2, null);
         }
         else {
-            canvas.drawBitmap(mDebrisBitmap, fromRect2, toRect2, null);
-            canvas.drawBitmap(mDebrisBitmap, fromRect1, toRect1, null);
+            canvas.drawBitmap(mDebrisReversedBitmap, fromRect2, toRect2, null);
+            canvas.drawBitmap(mDebrisReversedBitmap, fromRect1, toRect1, null);
         }
 
         //Next value for the debris's position.
@@ -311,6 +319,42 @@ public class GameEngine {
         return true;
     }
 
+    private void setRocksDodged(int numRocks) {
+        mNumRocksDodged += numRocks;
+
+        if (mNumRocksDodged < 30) {
+            CURRENT_LEVEL = LEVEL_EASY;
+            new DecodeDebrisBitmapTask().execute(R.drawable.debris1_blue);
+        }
+        else if (mNumRocksDodged >= 30 && mNumRocksDodged < 75) {
+            CURRENT_LEVEL = LEVEL_MEDIUM;
+            new DecodeDebrisBitmapTask().execute(R.drawable.debris2_blue);
+        }
+        else if (mNumRocksDodged >= 75) {
+            CURRENT_LEVEL = LEVEL_HARD;
+            new DecodeDebrisBitmapTask().execute(R.drawable.debris3_blue);
+        }
+    }
+
+    private class DecodeDebrisBitmapTask extends AsyncTask<Integer, Integer, Void> {
+        protected Void doInBackground(Integer... resources) {
+            //assume only one bitmap will be passed at a time.
+            Bitmap bmp = UBitmapUtil.loadScaledBitmap(mContext, resources[0],
+                        Global.SCREEN_WIDTH, Global.SCREEN_HEIGHT, true);
+
+            mDebrisNextBitmap = bmp;
+            return null;
+        }
+
+        protected void onProgressUpdate(Integer... progress) {
+            //ignore
+        }
+
+        protected void onPostExecute(Long result) {
+            //ignore
+        }
+    }
+
     // Level of difficulty
     private final int LEVEL_EASY = 1;
     private final int LEVEL_MEDIUM = 2;
@@ -323,8 +367,8 @@ public class GameEngine {
     private int framesCountAvg = 0;
     private long framesTimer = 0;
 
-    private final int MAX_NUM_ROCKS = 20;
-    private final int INIT_NUM_ROCKS = 10;
+    private final int MAX_NUM_ROCKS = 25;
+    private final int INIT_NUM_ROCKS = 15;
 
     private Paint mPaint;
     private UImageInfo mShipInfo;
@@ -336,6 +380,9 @@ public class GameEngine {
 
     private Bitmap mBgrdBitmap;
     private Bitmap mDebrisBitmap;
+    private Bitmap mDebrisReversedBitmap;
+    private Bitmap mDebrisNextBitmap = null;
+
     private int mDebrisScroll;
     private int mBgrdScroll;
     private boolean mReverseBackroundFirst;
